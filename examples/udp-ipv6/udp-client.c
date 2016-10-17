@@ -107,13 +107,17 @@ set_global_address(void)
 static resolv_status_t
 set_connection_address(uip_ipaddr_t *ipaddr)
 {
+
+#define UDP_CONNECTION_ADDR       fd00:0:0:0:0200:0:0:5
+
 #ifndef UDP_CONNECTION_ADDR
 #if RESOLV_CONF_SUPPORTS_MDNS
 #define UDP_CONNECTION_ADDR       contiki-udp-server.local
 #elif UIP_CONF_ROUTER
 #define UDP_CONNECTION_ADDR       fd00:0:0:0:0212:7404:0004:0404
 #else
-#define UDP_CONNECTION_ADDR       fe80:0:0:0:6466:6666:6666:6666
+//#define UDP_CONNECTION_ADDR       fe80:0:0:0:6466:6666:6666:6666
+#define UDP_CONNECTION_ADDR        fd00:0:0:0:0200:0:0:2
 #endif
 #endif /* !UDP_CONNECTION_ADDR */
 

@@ -54,7 +54,7 @@
 
 #include <string.h>
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
 #if UIP_LOGGING
@@ -581,11 +581,13 @@ tcpip_ipv6_output(void)
       uip_ds6_route_t *route;
       /* Check if we have a route to the destination address. */
       route = uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr);
-
+       
+      PRINT6ADDR(&UIP_IP_BUF->destipaddr);
       /* No route was found - we send to the default route instead. */
       if(route == NULL) {
-        PRINTF("tcpip_ipv6_output: no route found, using default route\n");
+        PRINTF("tcpip_ipv6_output: no route found, using default route");
         nexthop = uip_ds6_defrt_choose();
+        PRINT6ADDR(nexthop);
         if(nexthop == NULL) {
 #ifdef UIP_FALLBACK_INTERFACE
           PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n",
