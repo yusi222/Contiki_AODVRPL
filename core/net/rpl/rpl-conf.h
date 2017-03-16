@@ -98,6 +98,20 @@
 #define RPL_DEFAULT_INSTANCE	       0x1e
 #endif /* RPL_CONF_DEFAULT_INSTANCE */
 
+/* This value decides which DAG instance we should participate in by default. */
+#ifdef RPL_AODV_RREQ_CONF_DEFAULT_INSTANCE
+#define RPL_AODV_RREQ_DEFAULT_INSTANCE RPL_AODV_RREQ_CONF_DEFAULT_INSTANCE
+#else
+#define RPL_AODV_RREQ_DEFAULT_INSTANCE	       0x1d
+#endif /* RPL_AODV_RRPQ_DEFAULT_INSTANCE */
+
+/* This value decides which DAG instance we should participate in by default. */
+#ifdef RPL_AODV_RREP_CONF_DEFAULT_INSTANCE
+#define RPL_AODV_RREP_DEFAULT_INSTANCE RPL_AODV_RREP_CONF_DEFAULT_INSTANCE
+#else
+#define  RPL_AODV_RREP_DEFAULT_INSTANCE	     0x1c
+#endif /* RPL_AODV_RRPQ_DEFAULT_INSTANCE */
+
 /*
  * This value decides if this node must stay as a leaf or not
  * as allowed by draft-ietf-roll-rpl-19#section-8.5
@@ -114,7 +128,9 @@
 #ifdef RPL_CONF_MAX_INSTANCES
 #define RPL_MAX_INSTANCES     RPL_CONF_MAX_INSTANCES
 #else
-#define RPL_MAX_INSTANCES     1
+//#define RPL_MAX_INSTANCES     1
+//AODV-RPL
+#define RPL_MAX_INSTANCES     3
 #endif /* RPL_CONF_MAX_INSTANCES */
 
 /*
@@ -123,7 +139,8 @@
 #ifdef RPL_CONF_MAX_DAG_PER_INSTANCE
 #define RPL_MAX_DAG_PER_INSTANCE     RPL_CONF_MAX_DAG_PER_INSTANCE
 #else
-#define RPL_MAX_DAG_PER_INSTANCE     2
+#define RPL_MAX_DAG_PER_INSTANCE     1
+
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
 
 /*
@@ -151,7 +168,7 @@
 #ifdef RPL_CONF_DAG_LIFETIME
 #define RPL_DAG_LIFETIME                    RPL_CONF_DAG_LIFETIME
 #else
-#define RPL_DAG_LIFETIME                    3
+#define RPL_DAG_LIFETIME                   4 
 #endif /* RPL_CONF_DAG_LIFETIME */
 
 /*
@@ -178,7 +195,8 @@
 #ifdef RPL_CONF_DIO_INTERVAL_MIN
 #define RPL_DIO_INTERVAL_MIN        RPL_CONF_DIO_INTERVAL_MIN
 #else
-#define RPL_DIO_INTERVAL_MIN        12
+//#define RPL_DIO_INTERVAL_MIN        12
+#define RPL_DIO_INTERVAL_MIN        3
 #endif
 
 /*

@@ -63,7 +63,7 @@
 #endif /* CC2520_CONF_RSSI_OFFSET */
 
 #include <stdio.h>
-#define DEBUG 0
+#define DEBUG 0 
 #if DEBUG
 #define PRINTF(...) printf(__VA_ARGS__)
 #else

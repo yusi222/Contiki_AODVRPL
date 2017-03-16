@@ -32,6 +32,7 @@
 #define PROJECT_ROUTER_CONF_H_
 
 #ifndef WITH_NON_STORING
+
 #define WITH_NON_STORING 0 /* Set this to run with non-storing mode */
 #endif /* WITH_NON_STORING */
 
@@ -63,5 +64,12 @@
 #ifndef WEBSERVER_CONF_CFS_CONNS
 #define WEBSERVER_CONF_CFS_CONNS 2
 #endif
+
+#undef NETSTACK_CONF_MAC
+#define NETSTACK_CONF_MAC     nullmac_driver
+
+#undef NETSTACK_CONF_RDC
+#define NETSTACK_CONF_RDC     nullrdc_driver
+
 
 #endif /* PROJECT_ROUTER_CONF_H_ */

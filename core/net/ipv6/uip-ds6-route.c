@@ -258,7 +258,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
   uip_ds6_route_t *found_route;
   uint8_t longestmatch;
 
-  PRINTF("uip-ds6-route: Looking up route for ");
+  PRINTF("\n uip-ds6-route: Looking up route for ");
   PRINT6ADDR(addr);
   PRINTF("\n");
 
@@ -270,6 +270,8 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
       r = uip_ds6_route_next(r)) {
     if(r->length >= longestmatch &&
        uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) {
+      if((r->flag == AODV_RREQ_ENTRY) || (r->flag == AODV_RREP_ENTRY)) 
+        continue;
       longestmatch = r->length;
       found_route = r;
       /* check if total match - e.g. all 128 bits do match */
@@ -279,6 +281,8 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
     }
   }
 
+  /*
+ DEBUG
   if(found_route != NULL) {
     PRINTF("uip-ds6-route: Found route: ");
     PRINT6ADDR(addr);
@@ -288,7 +292,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
   } else {
     PRINTF("uip-ds6-route: No route found\n");
   }
-
+*/
   if(found_route != NULL && found_route != list_head(routelist)) {
     /* If we found a route, we put it at the start of the routeslist
        list. The list is ordered by how recently we looked them up:
@@ -304,7 +308,13 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
   return NULL;
 #endif /* (UIP_CONF_MAX_ROUTES != 0) */
 }
+
+
+
+
+#if 0
 /*---------------------------------------------------------------------------*/
+
 uip_ds6_route_t *
 uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
 		  uip_ipaddr_t *nexthop)
@@ -461,6 +471,310 @@ uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
   return NULL;
 #endif /* (UIP_CONF_MAX_ROUTES != 0) */
 }
+#endif 0
+/*---------------------------------------------------------------------------*/
+
+
+
+void
+uip_ds6_aodv_route_rm(uip_ds6_route_t *route)
+{
+  struct uip_ds6_route_neighbor_route *neighbor_route;
+if( (route->flag  == AODV_RREQ_ENTRY) || (route->flag  == AODV_RREP_ENTRY))
+  {
+  #if DEBUG != DEBUG_NONE
+    assert_nbr_routes_list_sane();
+  #endif /* DEBUG != DEBUG_NONE */
+    if(route != NULL && route->neighbor_routes != NULL) {
+
+//    if(route->flag == PCE_ENTRY)return;
+
+    //PRINTF("uip_ds6_route_rm: removing route: ");
+    //PRINT6ADDR(&route->ipaddr);
+    //PRINTF("\n");
+
+    /* Remove the route from the route list */
+      list_remove(routelist, route);
+
+    /* Find the corresponding neighbor_route and remove it. */
+      for(neighbor_route = list_head(route->neighbor_routes->route_list);
+          neighbor_route != NULL && neighbor_route->route != route;
+          neighbor_route = list_item_next(neighbor_route));
+
+      if(neighbor_route == NULL) {
+      //PRINTF("uip_ds6_route_rm: neighbor_route was NULL for ");
+        uip_debug_ipaddr_print(&route->ipaddr);
+      //PRINTF("\n");
+      }
+      list_remove(route->neighbor_routes->route_list, neighbor_route);
+      if(list_head(route->neighbor_routes->route_list) == NULL) {
+      /* If this was the only route using this neighbor, remove the
+         neibhor from the table */
+      //PRINTF("uip_ds6_route_rm: removing neighbor too\n");
+        nbr_table_remove(nbr_routes, route->neighbor_routes->route_list);
+      }
+      memb_free(&routememb, route);
+      memb_free(&neighborroutememb, neighbor_route);
+
+      num_routes--;
+
+    //PRINTF("uip_ds6_route_rm num %d\n", num_routes);
+
+  #if UIP_DS6_NOTIFICATIONS
+      call_route_callback(UIP_DS6_NOTIFICATION_ROUTE_RM,
+          &route->ipaddr, uip_ds6_route_nexthop(route));
+  #endif
+  #if 0 //(DEBUG & DEBUG_ANNOTATE) == DEBUG_ANNOTATE
+    /* we need to check if this was the last route towards "nexthop" */
+    /* if so - remove that link (annotation) */
+    uip_ds6_route_t *r;
+    for(r = uip_ds6_route_head();
+        r != NULL;
+        r = uip_ds6_route_next(r)) {
+      uip_ipaddr_t *nextr, *nextroute;
+      nextr = uip_ds6_route_nexthop(r);
+      nextroute = uip_ds6_route_nexthop(route);
+      if(nextr != NULL &&
+         nextroute != NULL &&
+         uip_ipaddr_cmp(nextr, nextroute)) {
+        /* we found another link using the specific nexthop, so keep the #L */
+        return;
+      }
+    }
+    ANNOTATE("#L %u 0\n", uip_ds6_route_nexthop(route)->u8[sizeof(uip_ipaddr_t) - 1]);
+  #endif
+  }
+
+  #if DEBUG != DEBUG_NONE
+    assert_nbr_routes_list_sane();
+  #endif /* DEBUG != DEBUG_NONE */
+  }
+  return;
+}
+
+/*---------------------------------------------------------------------------*/
+
+uip_ds6_route_t *
+uip_ds6_aodv_route_lookup(uip_ipaddr_t *addr)
+{
+  PRINTF("uip-ds6-route: Looking up AODV route for ");
+  PRINT6ADDR(addr);
+  PRINTF("\n");
+
+  uip_ds6_route_t *found_route;
+  uip_ds6_route_t *r;
+  uint8_t longestmatch;
+  uint16_t   random;
+  found_route = NULL;
+  random = ( random_rand() % 100) + 1 ;     
+  longestmatch = 0;
+  for(r = uip_ds6_route_head();r != NULL;r = uip_ds6_route_next(r) )
+    {
+        if(r->length >= longestmatch && uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) 
+        {
+        //  if( (r->flag  == AODV_RREQ_ENTRY) || (r->flag  == AODV_RREP_ENTRY))
+	 // {
+               longestmatch = r->length;
+	       found_route = r;
+               /* check if total match - e.g. all 128 bits do match */
+               if(longestmatch == 128) {
+  			 break;
+               }
+	  // }
+	 }  	
+    }
+#if 0
+  if(found_route != NULL) {
+      	PRINTF("AODV Found route  Flag  %d in  Symmtry %d ",found_route->flag,found_route->symtric);
+	PRINT6ADDR(addr);
+    	PRINTF(" via ");
+   	PRINT6ADDR(uip_ds6_route_nexthop(found_route));
+    	PRINTF("\n");
+  } else {
+    	PRINTF("uip-ds6-route_AODV: No route found\n");
+  }
+#endif
+  if(found_route != NULL && found_route != list_head(routelist)) {
+    /* If we found a route, we put it at the start of the routeslist
+       list. The list is ordered by how recently we looked them up:
+       the least recently used route will be at the end of the
+       list - for fast lookups (assuming multiple packets to the same node). */
+
+    list_remove(routelist, found_route);
+    list_push(routelist, found_route);
+  }
+  if(found_route ==NULL){
+	 PRINTF("INo AODV entry found. Invoking normal lookup\n");
+	  found_route = uip_ds6_route_lookup(addr);
+  }
+  PRINTF("AODV route Seach return ");
+  return found_route;
+}
+
+
+/*--------------------------------------------------------------------------------------------------------*/
+
+
+uip_ds6_route_t *
+uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length, uint8_t flag, uint8_t symtric,
+		  uip_ipaddr_t *nexthop)
+{
+  uip_ds6_route_t *r;
+  struct uip_ds6_route_neighbor_route *nbrr;
+
+#if DEBUG != DEBUG_NONE
+  assert_nbr_routes_list_sane();
+#endif /* DEBUG != DEBUG_NONE */
+
+  /* Get link-layer address of next hop, make sure it is in neighbor table */
+  const uip_lladdr_t *nexthop_lladdr = uip_ds6_nbr_lladdr_from_ipaddr(nexthop);
+  if(nexthop_lladdr == NULL) {
+    PRINTF("uip_ds6_route_add: neighbor link-local address unknown for ");
+    PRINT6ADDR(nexthop);
+    PRINTF("\n");
+    return NULL;
+  }
+
+  /* First make sure that we don't add a route twice. If we find an
+     existing route for our destination, we'll delete the old
+     one first. */
+  //printf("Calling Lookup 1\n");
+  r = uip_ds6_route_lookup(ipaddr);
+  if(r != NULL) {
+    uip_ipaddr_t *current_nexthop;
+    current_nexthop = uip_ds6_route_nexthop(r);
+    if(current_nexthop != NULL && uip_ipaddr_cmp(nexthop, current_nexthop)) {
+      /* no need to update route - already correct! */
+      return r;
+    }
+    /*if rpl is adding route, then remove existing */
+    //if (flag ==RPL_ENTRY){
+    PRINTF("AODV_route found, deleting it");
+    uip_ds6_route_rm(r);
+    //}
+  }
+  else
+  {
+    r = uip_ds6_aodv_route_lookup(ipaddr);
+  //  if(r != NULL) {      uip_ds6_aodv_route_rm(r);      }
+    }
+
+  {
+    struct uip_ds6_route_neighbor_routes *routes;
+    /* If there is no routing entry, create one. We first need to
+       check if we have room for this route. If not, we remove the
+       least recently used one we have. */
+
+    if(uip_ds6_route_num_routes() == UIP_DS6_ROUTE_NB)  {
+      /* Removing the oldest route entry from the route table. The
+         least recently used route is the first route on the list. */
+      uip_ds6_route_t *oldest;
+         
+      while(1){
+        oldest = list_tail(routelist); /* uip_ds6_route_head(); */
+          if( (oldest->flag  ==  AODV_RREQ_ENTRY) || (oldest->flag  ==AODV_RREP_ENTRY))
+          {
+            list_remove(routelist, oldest);
+            list_push(routelist, oldest);
+            continue;
+          }
+          PRINTF(" AT Add route");  
+     	  uip_ds6_route_rm(oldest);
+        break;
+      }
+    }
+
+
+    /* Every neighbor on our neighbor table holds a struct
+       uip_ds6_route_neighbor_routes which holds a list of routes that
+       go through the neighbor. We add our route entry to this list.
+
+       We first check to see if we already have this neighbor in our
+       nbr_route table. If so, the neighbor already has a route entry
+       list.
+    */
+    routes = nbr_table_get_from_lladdr(nbr_routes,
+                                       (linkaddr_t *)nexthop_lladdr);
+
+    if(routes == NULL) {
+      /* If the neighbor did not have an entry in our neighbor table,
+         we create one. The nbr_table_add_lladdr() function returns a
+         pointer to a pointer that we may use for our own purposes. We
+         initialize this pointer with the list of routing entries that
+         are attached to this neighbor. */
+      routes = nbr_table_add_lladdr(nbr_routes,
+                                    (linkaddr_t *)nexthop_lladdr,NBR_TABLE_REASON_ROUTE, NULL);
+      if(routes == NULL) {
+        /* This should not happen, as we explicitly deallocated one
+           route table entry above. */
+        //PRINTF("uip_ds6_route_add: could not allocate neighbor table entry\n");
+        return NULL;
+      }
+      LIST_STRUCT_INIT(routes, route_list);
+    }
+
+    /* Allocate a routing entry and populate it. */
+    r = memb_alloc(&routememb);
+
+    if(r == NULL) {
+      /* This should not happen, as we explicitly deallocated one
+         route table entry above. */
+      //PRINTF("uip_ds6_route_add: could not allocate route\n");
+      return NULL;
+    }
+
+    /* add new routes first - assuming that there is a reason to add this
+       and that there is a packet coming soon. */
+    list_push(routelist, r);
+
+    nbrr = memb_alloc(&neighborroutememb);
+    if(nbrr == NULL) {
+      /* This should not happen, as we explicitly deallocated one
+         route table entry above. */
+      //PRINTF("uip_ds6_route_add: could not allocate neighbor route list entry\n");
+      memb_free(&routememb, r);
+      return NULL;
+    }
+
+    nbrr->route = r;
+    /* Add the route to this neighbor */
+    list_add(routes->route_list, nbrr);
+    r->neighbor_routes = routes;
+    num_routes++;
+
+    //PRINTF("uip_ds6_route_add num %d\n", num_routes);
+  }
+
+  uip_ipaddr_copy(&(r->ipaddr), ipaddr);
+  r->length = length;
+  r->flag   = flag;
+  r->symtric   = symtric;
+
+#ifdef UIP_DS6_ROUTE_STATE_TYPE
+  memset(&r->state, 0, sizeof(UIP_DS6_ROUTE_STATE_TYPE));
+#endif
+
+  PRINTF("uip_ds6_route_add:  AODV adding route: %d ",r->flag);
+  PRINT6ADDR(ipaddr);
+  PRINTF(" via ");
+  PRINT6ADDR(nexthop);
+  PRINTF("\n");
+  ANNOTATE("#L %u 1;blue\n", nexthop->u8[sizeof(uip_ipaddr_t) - 1]);
+
+#if UIP_DS6_NOTIFICATIONS
+  call_route_callback(UIP_DS6_NOTIFICATION_ROUTE_ADD, ipaddr, nexthop);
+#endif
+
+#if DEBUG != DEBUG_NONE
+  assert_nbr_routes_list_sane();
+#endif /* DEBUG != DEBUG_NONE */
+
+
+  return r;
+}
+
+
+
 
 /*---------------------------------------------------------------------------*/
 void
@@ -471,7 +785,10 @@ uip_ds6_route_rm(uip_ds6_route_t *route)
 #if DEBUG != DEBUG_NONE
   assert_nbr_routes_list_sane();
 #endif /* DEBUG != DEBUG_NONE */
-  if(route != NULL && route->neighbor_routes != NULL) {
+//  if (route->flag == AODV_RREQ_ENTRY || route->flag ==AODV_RREP_ENTRY){  PRINTF("uip_ds6_route_rm: AODV ");  return; }  
+
+  if(route != NULL && route->neighbor_routes != NULL) // &&  route->flag != AODV_RREQ_ENTRY && route->flag !=AODV_RREP_ENTRY)
+ {
 
     PRINTF("uip_ds6_route_rm: removing route: ");
     PRINT6ADDR(&route->ipaddr);

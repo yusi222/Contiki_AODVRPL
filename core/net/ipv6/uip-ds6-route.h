@@ -49,6 +49,14 @@ NBR_TABLE_DECLARE(nbr_routes);
 
 void uip_ds6_route_init(void);
 
+#define RPL_DEFAULT 1
+#define AODV_RREQ_ENTRY 2
+#define AODV_RREP_ENTRY  3
+
+#define  AODV_ASYMMTRIC_LINK  0
+#define  AODV_SYMMTRIC_LINK   1
+
+
 #ifndef UIP_CONF_UIP_DS6_NOTIFICATIONS
 #define UIP_DS6_NOTIFICATIONS (UIP_CONF_MAX_ROUTES != 0)
 #else
@@ -158,6 +166,8 @@ typedef struct uip_ds6_route {
   UIP_DS6_ROUTE_STATE_TYPE state;
 #endif
   uint8_t length;
+  uint8_t flag;
+  uint8_t symtric;
 } uip_ds6_route_t;
 
 /** \brief A neighbor route list entry, used on the
@@ -190,8 +200,13 @@ void uip_ds6_defrt_periodic(void);
 /** \name Routing Table basic routines */
 /** @{ */
 uip_ds6_route_t *uip_ds6_route_lookup(uip_ipaddr_t *destipaddr);
-uip_ds6_route_t *uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
-                                   uip_ipaddr_t *next_hop);
+//uip_ds6_route_t *uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,uip_ipaddr_t *next_hop);
+//AODV_RPL
+uip_ds6_route_t * uip_ds6_aodv_route_lookup(uip_ipaddr_t *addr);
+uip_ds6_route_t * uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length, uint8_t flag, uint8_t symtric,
+                  uip_ipaddr_t *nexthop);
+
+
 void uip_ds6_route_rm(uip_ds6_route_t *route);
 void uip_ds6_route_rm_by_nexthop(uip_ipaddr_t *nexthop);
 

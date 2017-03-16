@@ -50,7 +50,7 @@
 #include "net/rpl/rpl-ns.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_NONE 
 #include "net/ip/uip-debug.h"
 
 #include <limits.h>
@@ -128,7 +128,9 @@ rpl_purge_routes(void)
        * immediate removal below. This achieves the same as the original code,
        * which would delete lifetime <= 1
        */
-      r->state.lifetime--;
+      if (r->flag != AODV_RREQ_ENTRY && r->flag !=AODV_RREP_ENTRY){ // PRINTF("uip_ds6_route_rm: AODV ");
+       r->state.lifetime--;
+        }
     }
     r = uip_ds6_route_next(r);
   }
@@ -138,9 +140,14 @@ rpl_purge_routes(void)
 
   while(r != NULL) {
     if(r->state.lifetime < 1) {
+
+
+
       /* Routes with lifetime == 1 have only just been decremented from 2 to 1,
        * thus we want to keep them. Hence < and not <= */
       uip_ipaddr_copy(&prefix, &r->ipaddr);
+    
+      PRINTF("rpl.c1"); 
       uip_ds6_route_rm(r);
       r = uip_ds6_route_head();
       PRINTF("No more routes to ");
@@ -186,6 +193,7 @@ rpl_remove_routes(rpl_dag_t *dag)
 
   while(r != NULL) {
     if(r->state.dag == dag) {
+     PRINTF("RPL.C rpl_remove_routes ");
       uip_ds6_route_rm(r);
       r = uip_ds6_route_head();
     } else {
@@ -230,7 +238,8 @@ rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix, int prefix_len,
 {
   uip_ds6_route_t *rep;
 
-  if((rep = uip_ds6_route_add(prefix, prefix_len, next_hop)) == NULL) {
+
+  if((rep = uip_ds6_route_add(prefix, prefix_len, RPL_DEFAULT, AODV_SYMMTRIC_LINK, next_hop)) == NULL) {
     PRINTF("RPL: No space for more route entries\n");
     return NULL;
   }

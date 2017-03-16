@@ -138,6 +138,7 @@ struct rpl_dag {
   uint8_t version;
   uint8_t grounded;
   uint8_t preference;
+//  uint8_t s;
   uint8_t used;
   /* live data for the DAG */
   uint8_t joined;
@@ -214,6 +215,29 @@ struct rpl_of {
 };
 typedef struct rpl_of rpl_of_t;
 
+struct RREQ_message{
+  uint8_t type;
+  uint8_t orig_seq_no;
+  uint16_t dest_seq_no;
+  uip_ipaddr_t targ_node_IPv6_addr;
+
+};
+struct RREP_message{
+
+  uint8_t type;
+  uint8_t dest_seq_no;
+  uint8_t prefix_sz;
+  uint8_t G;
+  uip_ipaddr_t targ_node_IPv6_addr;
+
+};
+
+union RPL_options{
+  struct RREQ_message rreq_message;
+  struct RREP_message rrep_message; 
+};
+
+
 /*---------------------------------------------------------------------------*/
 /* Instance */
 struct rpl_instance {
@@ -228,6 +252,7 @@ struct rpl_instance {
   uint8_t used;
   uint8_t dtsn_out;
   uint8_t mop;
+  uint8_t s;
   uint8_t dio_intdoubl;
   uint8_t dio_intmin;
   uint8_t dio_redundancy;
@@ -261,6 +286,9 @@ struct rpl_instance {
 #if RPL_WITH_DAO_ACK
   struct ctimer dao_retransmit_timer;
 #endif /* RPL_WITH_DAO_ACK */
+union  RPL_options rpl_options;
+
+
 };
 
 /*---------------------------------------------------------------------------*/
@@ -268,6 +296,8 @@ struct rpl_instance {
 void rpl_init(void);
 void uip_rpl_input(void);
 rpl_dag_t *rpl_set_root(uint8_t instance_id, uip_ipaddr_t *dag_id);
+rpl_dag_t *rpl_set_root_ptop(uint8_t instance_id, uip_ipaddr_t *dag_id,uint8_t mop,uint8_t rpl_options,uip_ipaddr_t *dest_addr,uint8_t route_symmtric );
+ 
 int rpl_set_prefix(rpl_dag_t *dag, uip_ipaddr_t *prefix, unsigned len);
 int rpl_repair_root(uint8_t instance_id);
 int rpl_set_default_route(rpl_instance_t *instance, uip_ipaddr_t *from);

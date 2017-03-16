@@ -78,17 +78,22 @@
 #define RPL_CODE_SEC_DAO               0x82   /* Secure DAO */
 #define RPL_CODE_SEC_DAO_ACK           0x83   /* Secure DAO ACK */
 
-/* RPL control message options. */
-#define RPL_OPTION_PAD1                  0
-#define RPL_OPTION_PADN                  1
-#define RPL_OPTION_DAG_METRIC_CONTAINER  2
-#define RPL_OPTION_ROUTE_INFO            3
-#define RPL_OPTION_DAG_CONF              4
-#define RPL_OPTION_TARGET                5
-#define RPL_OPTION_TRANSIT               6
-#define RPL_OPTION_SOLICITED_INFO        7
-#define RPL_OPTION_PREFIX_INFO           8
-#define RPL_OPTION_TARGET_DESC           9
+/* RPL control message options.  *///AODV-RPL 
+#define RPL_OPTION_PAD1                  0x00
+#define RPL_OPTION_PADN                  0x01
+#define RPL_OPTION_DAG_METRIC_CONTAINER  0x02
+#define RPL_OPTION_ROUTE_INFO            0x03
+#define RPL_OPTION_DAG_CONF              0x04
+#define RPL_OPTION_TARGET                0x05
+#define RPL_OPTION_TRANSIT               0x06
+#define RPL_OPTION_SOLICITED_INFO        0x07
+#define RPL_OPTION_PREFIX_INFO           0x08
+#define RPL_OPTION_TARGET_DESC           0x09
+#define RPL_OPTION_RREQ                  0x0a
+#define RPL_OPTION_RREP                  0x0b
+
+
+
 
 #define RPL_DAO_K_FLAG                   0x80 /* DAO ACK requested */
 #define RPL_DAO_D_FLAG                   0x40 /* DODAG ID present */
@@ -198,6 +203,9 @@
 #define RPL_MOP_NON_STORING             1
 #define RPL_MOP_STORING_NO_MULTICAST    2
 #define RPL_MOP_STORING_MULTICAST       3
+#define RPL_MOP_PTOP                    4 
+#define RPL_MOP_AODV_RPL                5
+
 
 /* RPL Mode of operation */
 #ifdef  RPL_CONF_MOP
@@ -292,6 +300,7 @@ struct rpl_dio {
   uint8_t version;
   uint8_t instance_id;
   uint8_t dtsn;
+  uint8_t  s;
   uint8_t dag_intdoubl;
   uint8_t dag_intmin;
   uint8_t dag_redund;
@@ -302,6 +311,7 @@ struct rpl_dio {
   rpl_prefix_t destination_prefix;
   rpl_prefix_t prefix_info;
   struct rpl_metric_container mc;
+  union  RPL_options rpl_options;
 };
 typedef struct rpl_dio rpl_dio_t;
 

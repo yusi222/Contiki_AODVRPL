@@ -54,7 +54,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
 static uip_ipaddr_t prefix;
@@ -399,6 +399,10 @@ set_prefix_64(uip_ipaddr_t *prefix_64)
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(border_router_process, ev, data)
 {
+#if UIP_CONF_ROUTER
+        uip_ipaddr_t ipaddr;
+#endif  /* UIP_CONF_ROUTER */
+
   static struct etimer et;
 
   PROCESS_BEGIN();
@@ -439,7 +443,13 @@ PROCESS_THREAD(border_router_process, ev, data)
 #if DEBUG || 1
   print_local_addresses();
 #endif
-
+#if 0
+#if UIP_CONF_ROUTER
+        uip_ip6addr(&ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0, 0);
+        //uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
+        uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
+#endif  /* UIP_CONF_ROUTER */
+#endif
   while(1) {
     PROCESS_YIELD();
     if (ev == sensors_event && data == &button_sensor) {

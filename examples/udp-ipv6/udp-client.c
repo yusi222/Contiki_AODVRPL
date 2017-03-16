@@ -38,7 +38,7 @@
 #define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
-#define SEND_INTERVAL		15 * CLOCK_SECOND
+#define SEND_INTERVAL	 30* CLOCK_SECOND
 #define MAX_PAYLOAD_LEN		40
 
 static struct uip_udp_conn *client_conn;
@@ -54,7 +54,7 @@ tcpip_handler(void)
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    printf("Response from the server: '%s'\n", str);
+   // PRINTF("Response from the server: '%s'\n", str);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -62,12 +62,13 @@ static char buf[MAX_PAYLOAD_LEN];
 static void
 timeout_handler(void)
 {
-  static int seq_id;
-
-  printf("Client sending to: ");
+  static int seq_id=0;
+  seq_id++;
+  PRINTF("Client_sendingHello %d to ",seq_id);
   PRINT6ADDR(&client_conn->ripaddr);
-  sprintf(buf, "Hello %d from the client", ++seq_id);
-  printf(" (msg: %s)\n", buf);
+  PRINTF("\n");
+  sprintf(buf, "Hello %d from the client",seq_id);
+//  PRINTF(" (msg: %s)\n", buf);
 #if SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION
   uip_udp_packet_send(client_conn, buf, UIP_APPDATA_SIZE);
 #else /* SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION */
@@ -108,7 +109,8 @@ static resolv_status_t
 set_connection_address(uip_ipaddr_t *ipaddr)
 {
 
-#define UDP_CONNECTION_ADDR       fd00:0:0:0:0200:0:0:5
+//#define UDP_CONNECTION_ADDR       aaaa::200:0:0:a
+#define UDP_CONNECTION_ADDR       fd00:0:0:0:0200:0:0:b
 
 #ifndef UDP_CONNECTION_ADDR
 #if RESOLV_CONF_SUPPORTS_MDNS
