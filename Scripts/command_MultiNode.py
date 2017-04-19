@@ -16,7 +16,6 @@ file_ex       =".csv"
 filename      = args.infile
 dest_filename = args.infile + file_ex
  
-print"\n"
 print "log file :  %s "%filename
  
 No_data_pkt_sent = 0
@@ -38,6 +37,7 @@ reciever_list_1 = []
 delay_list_1 =[]
 final_delay_list =[] 
 
+print"---Extracting Data from File ...%s"%filename
 fp = open(filename)
 f = fp.readlines() 
 for line in f:
