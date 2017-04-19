@@ -140,14 +140,9 @@ rpl_purge_routes(void)
 
   while(r != NULL) {
     if(r->state.lifetime < 1) {
-
-
-
-      /* Routes with lifetime == 1 have only just been decremented from 2 to 1,
+    /* Routes with lifetime == 1 have only just been decremented from 2 to 1,
        * thus we want to keep them. Hence < and not <= */
       uip_ipaddr_copy(&prefix, &r->ipaddr);
-    
-      PRINTF("rpl.c1"); 
       uip_ds6_route_rm(r);
       r = uip_ds6_route_head();
       PRINTF("No more routes to ");
@@ -193,7 +188,6 @@ rpl_remove_routes(rpl_dag_t *dag)
 
   while(r != NULL) {
     if(r->state.dag == dag) {
-     PRINTF("RPL.C rpl_remove_routes ");
       uip_ds6_route_rm(r);
       r = uip_ds6_route_head();
     } else {

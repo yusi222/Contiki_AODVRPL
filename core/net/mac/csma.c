@@ -90,7 +90,9 @@
 #ifdef CSMA_CONF_MAX_FRAME_RETRIES
 #define CSMA_MAX_MAX_FRAME_RETRIES CSMA_CONF_MAX_FRAME_RETRIES
 #else
-#define CSMA_MAX_MAX_FRAME_RETRIES 7
+
+/*#define CSMA_MAX_MAX_FRAME_RETRIES 7 Lav changed */
+#define CSMA_MAX_MAX_FRAME_RETRIES 3 
 #endif
 
 /* Packet metadata */

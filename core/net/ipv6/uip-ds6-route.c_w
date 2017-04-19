@@ -87,7 +87,7 @@ LIST(notificationlist);
 #endif
 
 #undef DEBUG
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
 /*---------------------------------------------------------------------------*/
@@ -258,9 +258,10 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
   uip_ds6_route_t *found_route;
   uint8_t longestmatch;
 
-  PRINTF("uip-ds6-route: Looking up route for ");
+  PRINTF("\n uip-ds6-route: Looking up route for ");
   PRINT6ADDR(addr);
   PRINTF("\n");
+
 
   found_route = NULL;
   longestmatch = 0;
@@ -268,7 +269,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
       r != NULL;
       r = uip_ds6_route_next(r)) {
     if(r->length >= longestmatch &&
-                        uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) {
+       uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) {
       if((r->flag == AODV_RREQ_ENTRY) || (r->flag == AODV_RREP_ENTRY)) 
         continue;
       longestmatch = r->length;
@@ -279,6 +280,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
       }
     }
   }
+
   
 
   if(found_route != NULL) {
@@ -566,40 +568,53 @@ uip_ds6_aodv_route_lookup(uip_ipaddr_t *addr)
   found_route = NULL;
   random = ( random_rand() % 100) + 1 ;     
   longestmatch = 0;
-/*
-  PRINTF("Routing table  START\n");
-  for(r = uip_ds6_route_head();r != NULL;r = uip_ds6_route_next(r) )
-    {
-	if( r->flag == AODV_RREQ_ENTRY)	{
-	  PRINTF("AODV_RREQ_ENTRY ");
-	}else if (r->flag == AODV_RREP_ENTRY){	
-  	  PRINTF("AODV_RREP_ENTRY");
-	}else if ( r->flag == RPL_DEFAULT){
-  	  PRINTF("DEFAULT_ENTRY ");
-	}
-	PRINT6ADDR(&r->ipaddr);
-    	PRINTF(" via ");
-   	PRINT6ADDR(uip_ds6_route_nexthop( r));
-    	PRINTF("\n");
-    }
-  PRINTF("Routing table END ");
 
-*/
+
+
   for(r = uip_ds6_route_head();r != NULL;r = uip_ds6_route_next(r) )
     {
-        if(uip_ipaddr_cmp(addr, &r->ipaddr)) {
+        if(r->length >= longestmatch && uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) 
+        {
+       //   if( (r->flag  == AODV_RREQ_ENTRY) || (r->flag  == AODV_RREP_ENTRY))	  {
              longestmatch = r->length;
 	      found_route = r;
-  	      break;
-        }
-   }
+               /* check if total match - e.g. all 128 bits do match */
+               if(longestmatch == 128) {
+  			 break;
+               }
+	   //}
+	 }  	
+    }
+PRINTF("\nRouting table  START");
+  for(r = uip_ds6_route_head();r != NULL;r = uip_ds6_route_next(r) )
+    {
+
+	if( r->flag == AODV_RREQ_ENTRY)
+	{
+	  PRINTF("AODV_RREQ_ENTRY ");
+	}else if (r->flag == AODV_RREP_ENTRY)
+	{	
+  	  PRINTF("AODV_RREP_ENTRY");
+	}else if ( r->flag == RPL_DEFAULT)
+	{
+  	  PRINTF("DEFAULT_ENTRY ");
+	}
+	PRINT6ADDR(addr);
+    	PRINTF(" via ");
+   	PRINT6ADDR(uip_ds6_route_nexthop(found_route));
+    	PRINTF("\n");
+    }
+PRINTF("\nRouting table END :---\n");
   if(found_route != NULL) {
     PRINTF("\n Found Route... ");
-	if(found_route->flag == AODV_RREQ_ENTRY){
+	if(found_route->flag == AODV_RREQ_ENTRY)
+	{
 	  PRINTF("AODV_RREQ_ENTRY ");
-	}else if (found_route->flag == AODV_RREP_ENTRY)	{	
-  	  PRINTF("AODV_RREP_ENTRY ");
-	}else if ( found_route->flag == RPL_DEFAULT){
+	}else if (found_route->flag == AODV_RREP_ENTRY)
+	{	
+  	  PRINTF("AODV_RREP_ENTRY");
+	}else if ( found_route->flag == RPL_DEFAULT)
+	{
   	  PRINTF("DEFAULT_ENTRY ");
 	}
 	PRINT6ADDR(addr);
@@ -623,6 +638,7 @@ uip_ds6_aodv_route_lookup(uip_ipaddr_t *addr)
 	 PRINTF("No AODV entry found. Invoking normal lookup\n");
 	  found_route = uip_ds6_route_lookup(addr);
   }
+  PRINTF("AODV route Seach return route ");
   return found_route;
 }
 
@@ -636,19 +652,6 @@ uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length, uint8_t flag, uint8_t sy
 {
   uip_ds6_route_t *r;
   struct uip_ds6_route_neighbor_route *nbrr;
-
- PRINTF("\nEnter uip_ds6_route_add: ");
- if(flag == AODV_RREQ_ENTRY){
-   PRINTF("AODV_RREQ_ENTRY ");
- }else if (flag == AODV_RREP_ENTRY){
-   PRINTF("AODV_RREP_ENTRY ");
- }else if (flag == RPL_DEFAULT){
-  PRINTF("DEFAULT_ENTRY ");
- }
-  PRINT6ADDR(ipaddr);
-  PRINTF(" via ");
-  PRINT6ADDR(nexthop);
-  PRINTF("\n");
 
 #if DEBUG != DEBUG_NONE
   assert_nbr_routes_list_sane();
@@ -675,17 +678,21 @@ uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length, uint8_t flag, uint8_t sy
       return r;
     }
     /*if rpl is adding route, then remove existing */
-    if( ((flag == AODV_RREQ_ENTRY) || (flag == AODV_RREP_ENTRY))  && (r->flag == RPL_DEFAULT)) {
-      PRINTF("\nDefault_route found, donot add AODV") ;
-      return r; 
-    }
-    PRINTF("Route found, deleting it ");
+   
+  /* if( (flag == AODV_RREQ_ENTRY) || (flag ==AODV_RREP_ENTRY) &&(r->flag == RPL_DEFAULT)) {
+	   PRINTF("Default route Exits Not to add AODV "); 
+	   return r;
+ 	   }
+*/
+    PRINTF("Route found, deleting it");
     uip_ds6_route_rm(r);
-  } else {
+  }
+  else
+  {
     r = uip_ds6_aodv_route_lookup(ipaddr);
     if(r != NULL) 
     { 
-         PRINTF("\nAODV_route found, ");
+         PRINTF("\nAODV_route found, deleting it");
       return r;
       //   uip_ds6_aodv_route_rm(r);     
      }
@@ -786,13 +793,21 @@ uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length, uint8_t flag, uint8_t sy
   memset(&r->state, 0, sizeof(UIP_DS6_ROUTE_STATE_TYPE));
 #endif
   PRINTF("\nuip_ds6_route_add:   ");
-if(r->flag == AODV_RREQ_ENTRY){
+if(r->flag == AODV_RREQ_ENTRY)
+{
   PRINTF("AODV_RREQ_ENTRY ");
-}else if (r->flag == AODV_RREP_ENTRY){
+
+}else if (r->flag == AODV_RREP_ENTRY)
+{
+
   PRINTF("AODV_RREP_ENTRY ");
-}else if (flag == RPL_DEFAULT){
+
+}else
+{
+
   PRINTF("DEFAULT_ENTRY ");
 }
+
   PRINT6ADDR(ipaddr);
   PRINTF(" via ");
   PRINT6ADDR(nexthop);

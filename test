@@ -1,0 +1,591 @@
+apps/orchestra/orchestra.c:/* Set to one only after getting an ACK for a DAO sent to our preferred parent */
+apps/orchestra/orchestra.c:  /* Check if our parent just ACKed a DAO */
+apps/orchestra/orchestra.c:     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+apps/orchestra/orchestra.c:   * (i.e. has ACKed at one of our DAOs since we decided to use it as a parent) */
+apps/orchestra/README.md:RPL with downwards routing enabled (relies on DAO).
+apps/orchestra/orchestra-conf.h: * Note: sender-based works only with RPL storing mode as it relies on DAO and
+1:#ifdef RPL_DEBUG_DAO_OUTPUT
+1:void RPL_DEBUG_DAO_OUTPUT(rpl_parent_t *);
+1:UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
+1:UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
+1:#if RPL_WITH_DAO_ACK
+1:    if(re->state.dao_seqno_out == seq && RPL_ROUTE_IS_DAO_PENDING(re)) {
+1:#endif /* RPL_WITH_DAO_ACK */
+1:/* prepare for forwarding of DAO */
+1:  /* set DAO pending and sequence numbers */
+1:  RPL_ROUTE_SET_DAO_PENDING(rep);
+1:  if(RPL_DIO_REFRESH_DAO_ROUTES && is_root && uc_addr == NULL) {
+1:    /* Request new DAO to refresh route. We do not do this for unicast DIO
+1:     * in order to avoid DAO messages after a DIS-DIO update,
+1:  if(flags & RPL_DAO_D_FLAG) {
+1:      PRINTF("RPL: Ignoring a DAO for a DAG different from ours\n");
+1:                 RPL_ROUTE_FROM_MULTICAST_DAO : RPL_ROUTE_FROM_UNICAST_DAO;
+1:  PRINTF("RPL: Received a (%s) DAO with sequence number %u from ",
+1:      learned_from == RPL_ROUTE_FROM_UNICAST_DAO? "unicast": "multicast", sequence);
+1:  if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
+1:    /* Check whether this is a DAO forwarding loop. */
+1:    /* check if this is a new DAO registration with an "illegal" rank */
+1:      PRINTF("RPL: Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
+1:    /* If we get the DAO from our parent, we also have a loop. */
+1:      PRINTF("RPL: Loop detected when receiving a unicast DAO from our parent\n");
+1:  PRINTF("RPL: DAO lifetime: %u, prefix length: %u prefix: ",
+1:    PRINTF("RPL: No-Path DAO received\n");
+1:    /* No-Path DAO received; invoke the route purging routine. */
+1:      /* We forward the incoming No-Path DAO to our parent, if we have
+1:        PRINTF("RPL: Forwarding No-path DAO to parent - out_seq:%d",
+1:                       ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+1:    if(flags & RPL_DAO_K_FLAG) {
+1:      /* indicate that we accepted the no-path DAO */
+1:                     RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+1:  PRINTF("RPL: Adding DAO route\n");
+1:  if((nbr = rpl_icmp6_update_nbr_table(&dao_sender_addr, NBR_TABLE_REASON_RPL_DAO, instance)) == NULL) {
+1:    PRINTF("RPL: Out of Memory, dropping DAO from ");
+1:    if(flags & RPL_DAO_K_FLAG) {
+1:		     is_root ? RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT :
+1:		     RPL_DAO_ACK_UNABLE_TO_ACCEPT);
+1:    PRINTF("RPL: Could not add a route after receiving a DAO\n");
+1:    if(flags & RPL_DAO_K_FLAG) {
+1:		     is_root ? RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT :
+1:		     RPL_DAO_ACK_UNABLE_TO_ACCEPT);
+1:  if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
+1:    if(flags & RPL_DAO_K_FLAG) {
+1:      if((!RPL_ROUTE_IS_DAO_PENDING(rep) &&
+1:      if(RPL_ROUTE_IS_DAO_PENDING(rep) &&
+1:      PRINTF("RPL: Forwarding DAO to parent ");
+1:                     ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+1:      PRINTF("RPL: Sending DAO ACK\n");
+1:                     RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+1:  if(flags & RPL_DAO_D_FLAG) {
+1:      PRINTF("RPL: Ignoring a DAO for a DAG different from ours\n");
+1:  PRINTF("RPL: DAO lifetime: %u, prefix length: %u prefix: ",
+1:    PRINTF("RPL: No-Path DAO received\n");
+1:  if(flags & RPL_DAO_K_FLAG) {
+1:    PRINTF("RPL: Sending DAO ACK\n");
+1:        RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+1:  PRINTF("RPL: Received a DAO from ");
+1:    PRINTF("RPL: Ignoring a DAO for an unknown RPL instance(%u)\n",
+1:#if RPL_WITH_DAO_ACK
+1:  if(instance->my_dao_transmissions >= RPL_DAO_MAX_RETRANSMISSIONS) {
+1:       * and no DAO_ACK configured. This probably means that the root
+1:       * does not support DAO ack. Assume that everything is ok for
+1:      instance->of->dao_ack_callback(parent, RPL_DAO_ACK_TIMEOUT);
+1:  PRINTF("RPL: will retransmit DAO - seq:%d trans:%d\n", instance->my_dao_seqno,
+1:             RPL_DAO_RETRANSMISSION_TIMEOUT / 2 +
+1:             (random_rand() % (RPL_DAO_RETRANSMISSION_TIMEOUT / 2)),
+1:#endif /* RPL_WITH_DAO_ACK */
+1:    PRINTF("RPL: No global address set for this node - suppressing DAO\n");
+1:#if RPL_WITH_DAO_ACK
+1:  /* set up the state since this will be the first transmission of DAO */
+1:  /* keep track of my own sending of DAO for handling ack and loss of ack */
+1:    ctimer_set(&instance->dao_retransmit_timer, RPL_DAO_RETRANSMISSION_TIMEOUT,
+1:#endif /* RPL_WITH_DAO_ACK */
+1:  /* Sending a DAO with own prefix as target */
+1:  /* If we are in feather mode, we should not send any DAOs */
+1:#ifdef RPL_DEBUG_DAO_OUTPUT
+1:  RPL_DEBUG_DAO_OUTPUT(parent);
+1:#if RPL_DAO_SPECIFY_DAG
+1:  buffer[pos] |= RPL_DAO_D_FLAG;
+1:#endif /* RPL_DAO_SPECIFY_DAG */
+1:#if RPL_WITH_DAO_ACK
+1:    buffer[pos] |= RPL_DAO_K_FLAG;
+1:#endif /* RPL_WITH_DAO_ACK */
+1:#if RPL_DAO_SPECIFY_DAG
+1:#endif /* RPL_DAO_SPECIFY_DAG */
+1:    /* Send DAO to parent */
+1:    /* Send DAO to root */
+1:  PRINTF("RPL: Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
+1:    uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
+1:#if RPL_WITH_DAO_ACK
+1:  PRINTF("RPL: Received a DAO %s with sequence number %d (%d) and status %d from ",
+1:    /* Inform objective function on status of the DAO ACK */
+1:#if RPL_REPAIR_ON_DAO_NACK
+1:    if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+1:       * Failed the DAO transmission - need to remove the default route.
+1:       * Trigger a local repair since we can not get our DAO in.
+1:    /* this DAO ACK should be forwarded to another recently registered route */
+1:      /* pick the recorded seq no from that node and forward DAO ACK - and
+1:      RPL_ROUTE_CLEAR_DAO_PENDING(re);
+1:        PRINTF("RPL: No next hop to fwd DAO ACK to\n");
+1:        PRINTF("RPL: Fwd DAO ACK to:");
+1:        uip_icmp6_send(nexthop, ICMP6_RPL, RPL_CODE_DAO_ACK, 4);
+1:      if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+1:      PRINTF("RPL: No route entry found to forward DAO ACK (seqno %u)\n", sequence);
+1:#endif /* RPL_WITH_DAO_ACK */
+1:#if RPL_WITH_DAO_ACK
+1:  PRINTF("RPL: Sending a DAO %s with sequence number %d to ", status < 128 ? "ACK" : "NACK", sequence);
+1:  uip_icmp6_send(dest, ICMP6_RPL, RPL_CODE_DAO_ACK, 4);
+1:#endif /* RPL_WITH_DAO_ACK */
+Binary file tools/stm32w/stm32w_flasher/JlinkARM.DLL matches
+Binary file tools/mspsim/lib/jfreechart-1.0.11.jar matches
+Binary file tools/cooja/apps/avrora/lib/avrora-small.jar matches
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:  public static final int RPL_CODE_DAO = 2;/* DAO message */
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:  public static final int RPL_CODE_DAO_ACK = 3;/* DAO ACK message */
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:        case RPL_CODE_DAO:
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:          brief.append("DAO");
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:          verbose.append("DAO");
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:        case RPL_CODE_DAO_ACK:
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:          brief.append("DAO ACK");
+tools/cooja/java/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.java:          verbose.append("DAO ACK");
+Binary file tools/cooja/build/org/contikios/cooja/plugins/analyzers/ICMPv6Analyzer.class matches
+regression-tests/17-slip-radio/code/project-conf.h:#define RPL_CONF_DAO_ACK		1
+regression-tests/23-rpl-non-storing/code/project-conf.h:/* Add a bit of extra probing in the non-storing case to compensate for reduced DAO traffic */
+examples/er-rest-example/project-conf.h:/* Turn of DAO ACK to make code smaller */
+examples/er-rest-example/project-conf.h:#undef RPL_CONF_WITH_DAO_ACK
+examples/er-rest-example/project-conf.h:#define RPL_CONF_WITH_DAO_ACK          0
+examples/jn516x/rpl/README.md:or by enabling DEBUG output in rpl-icmp6.c and looking at DAO prefixes being added.
+Binary file examples/ipv6/rpl-udp/udp-server.wismote matches
+Binary file examples/ipv6/rpl-udp/contiki-z1.a matches
+Binary file examples/ipv6/rpl-udp/contiki-wismote.a matches
+Binary file examples/ipv6/rpl-udp/udp-client.wismote matches
+Binary file examples/ipv6/rpl-udp/udp-client.z1 matches
+examples/ipv6/rpl-udp/rpl-udp-scale-wismote.csc:      <filter>ID:22.*DAO</filter>
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-mrhof.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip6.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-ext-header.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-icmp6.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-dag.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/queuebuf.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/resolv.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-ds6-route.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/mac-sequence.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/phase.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-nbr-policy.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/packetbuf.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-ds6.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/link-stats.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/tcp-socket.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/nbr-table.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/cc2520-arch.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/sicslowpan.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/tcpip.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/dhcpc.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-icmp6.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/simple-udp.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-of0.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-dag-root.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/udp-socket.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-nameserver.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-timers.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/psock.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/rpl-ns.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-nd6.o matches
+Binary file examples/ipv6/rpl-udp/obj_wismote/uip-ds6-nbr.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-mrhof.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip6.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-ext-header.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-icmp6.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-dag.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/queuebuf.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/resolv.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-ds6-route.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/mac-sequence.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/phase.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-nbr-policy.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/packetbuf.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-ds6.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/link-stats.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/tcp-socket.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/nbr-table.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/sicslowpan.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/tcpip.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/dhcpc.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-icmp6.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/simple-udp.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-of0.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-dag-root.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/udp-socket.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-nameserver.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-timers.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/psock.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/rpl-ns.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/cc2420-arch.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-nd6.o matches
+Binary file examples/ipv6/rpl-udp/obj_z1/uip-ds6-nbr.o matches
+Binary file examples/ipv6/rpl-border-router/contiki-z1.a matches
+Binary file examples/ipv6/rpl-border-router/border-router.wismote matches
+Binary file examples/ipv6/rpl-border-router/contiki-wismote.a matches
+Binary file examples/ipv6/rpl-border-router/border-router.z1 matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-mrhof.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/slip-bridge.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-ext-header.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-icmp6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-dag.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/queuebuf.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/resolv.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-ds6-route.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/mac-sequence.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/phase.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-nbr-policy.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/packetbuf.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-ds6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/link-stats.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/tcp-socket.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/nbr-table.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/cc2520-arch.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/sicslowpan.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/tcpip.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/dhcpc.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-icmp6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/simple-udp.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-of0.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-dag-root.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/udp-socket.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-nameserver.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-timers.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/httpd-simple.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/psock.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/rpl-ns.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-nd6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_wismote/uip-ds6-nbr.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-mrhof.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/slip-bridge.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-ext-header.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-icmp6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-dag.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/queuebuf.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/resolv.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-ds6-route.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/mac-sequence.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/phase.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-nbr-policy.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/packetbuf.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-ds6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/link-stats.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/tcp-socket.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/nbr-table.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/sicslowpan.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/tcpip.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/dhcpc.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-icmp6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/simple-udp.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-of0.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-dag-root.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/udp-socket.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-nameserver.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-timers.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/httpd-simple.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/psock.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/rpl-ns.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/cc2420-arch.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-nd6.o matches
+Binary file examples/ipv6/rpl-border-router/obj_z1/uip-ds6-nbr.o matches
+Binary file examples/udp-ipv6/udp-server.wismote matches
+Binary file examples/udp-ipv6/contiki-wismote.a matches
+Binary file examples/udp-ipv6/udp-client.wismote matches
+Binary file examples/udp-ipv6/udp-server.z1 matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-mrhof.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip6.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-ext-header.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-icmp6.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-dag.o matches
+Binary file examples/udp-ipv6/obj_wismote/queuebuf.o matches
+Binary file examples/udp-ipv6/obj_wismote/resolv.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-ds6-route.o matches
+Binary file examples/udp-ipv6/obj_wismote/mac-sequence.o matches
+Binary file examples/udp-ipv6/obj_wismote/phase.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-nbr-policy.o matches
+Binary file examples/udp-ipv6/obj_wismote/packetbuf.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-ds6.o matches
+Binary file examples/udp-ipv6/obj_wismote/link-stats.o matches
+Binary file examples/udp-ipv6/obj_wismote/tcp-socket.o matches
+Binary file examples/udp-ipv6/obj_wismote/nbr-table.o matches
+Binary file examples/udp-ipv6/obj_wismote/cc2520-arch.o matches
+Binary file examples/udp-ipv6/obj_wismote/sicslowpan.o matches
+Binary file examples/udp-ipv6/obj_wismote/tcpip.o matches
+Binary file examples/udp-ipv6/obj_wismote/dhcpc.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-icmp6.o matches
+Binary file examples/udp-ipv6/obj_wismote/simple-udp.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-of0.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-dag-root.o matches
+Binary file examples/udp-ipv6/obj_wismote/udp-socket.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-nameserver.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-timers.o matches
+Binary file examples/udp-ipv6/obj_wismote/psock.o matches
+Binary file examples/udp-ipv6/obj_wismote/rpl-ns.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-nd6.o matches
+Binary file examples/udp-ipv6/obj_wismote/uip-ds6-nbr.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-mrhof.o matches
+Binary file examples/udp-ipv6/obj_z1/uip6.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-ext-header.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-icmp6.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-dag.o matches
+Binary file examples/udp-ipv6/obj_z1/queuebuf.o matches
+Binary file examples/udp-ipv6/obj_z1/resolv.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-ds6-route.o matches
+Binary file examples/udp-ipv6/obj_z1/mac-sequence.o matches
+Binary file examples/udp-ipv6/obj_z1/phase.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-nbr-policy.o matches
+Binary file examples/udp-ipv6/obj_z1/packetbuf.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-ds6.o matches
+Binary file examples/udp-ipv6/obj_z1/link-stats.o matches
+Binary file examples/udp-ipv6/obj_z1/tcp-socket.o matches
+Binary file examples/udp-ipv6/obj_z1/nbr-table.o matches
+Binary file examples/udp-ipv6/obj_z1/sicslowpan.o matches
+Binary file examples/udp-ipv6/obj_z1/tcpip.o matches
+Binary file examples/udp-ipv6/obj_z1/dhcpc.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-icmp6.o matches
+Binary file examples/udp-ipv6/obj_z1/simple-udp.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-of0.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-dag-root.o matches
+Binary file examples/udp-ipv6/obj_z1/udp-socket.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-nameserver.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-timers.o matches
+Binary file examples/udp-ipv6/obj_z1/psock.o matches
+Binary file examples/udp-ipv6/obj_z1/rpl-ns.o matches
+Binary file examples/udp-ipv6/obj_z1/cc2420-arch.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-nd6.o matches
+Binary file examples/udp-ipv6/obj_z1/uip-ds6-nbr.o matches
+Binary file .git/modules/tools/mspsim/objects/pack/pack-2443764f0008749fbfe6ce5e465bcda57f669028.pack matches
+Binary file .git/objects/pack/pack-1c9caf05a59a220ae9b0def4dc5f6e247451e936.pack matches
+core/contiki-default-conf.h:   is fed whenever receiving DIO and DAO messages. This is always sufficient
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_ENTRY_DAO_PENDING       0x02
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_ENTRY_DAO_NACK          0x04
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_IS_DAO_PENDING(route)                                 \
+core/net/ipv6/uip-ds6-route.h:  ((route->state.state_flags & RPL_ROUTE_ENTRY_DAO_PENDING) != 0)
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_SET_DAO_PENDING(route) do {                           \
+core/net/ipv6/uip-ds6-route.h:    (route)->state.state_flags |= RPL_ROUTE_ENTRY_DAO_PENDING;          \
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_CLEAR_DAO_PENDING(route) do {                         \
+core/net/ipv6/uip-ds6-route.h:    (route)->state.state_flags &= ~RPL_ROUTE_ENTRY_DAO_PENDING;         \
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_IS_DAO_NACKED(route)                                  \
+core/net/ipv6/uip-ds6-route.h:  ((route->state.state_flags & RPL_ROUTE_ENTRY_DAO_NACK) != 0)
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_SET_DAO_NACKED(route) do {                            \
+core/net/ipv6/uip-ds6-route.h:    (route)->state.state_flags |= RPL_ROUTE_ENTRY_DAO_NACK;             \
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_CLEAR_DAO_NACKED(route) do {                          \
+core/net/ipv6/uip-ds6-route.h:    (route)->state.state_flags &= ~RPL_ROUTE_ENTRY_DAO_NACK;            \
+core/net/ipv6/uip-ds6-route.h:#define RPL_ROUTE_CLEAR_DAO(route) do {                                 \
+core/net/ipv6/uip-ds6-route.h:    (route)->state.state_flags &= ~(RPL_ROUTE_ENTRY_DAO_NACK|RPL_ROUTE_ENTRY_DAO_PENDING); \
+core/net/nbr-table.h:	NBR_TABLE_REASON_RPL_DAO,
+core/net/rpl/rpl.h: * A callback on the result of the DAO ACK. Similar to the neighbor link
+core/net/rpl/rpl.h: * callback. A failed DAO_ACK (NACK) can be used for switching to another
+core/net/rpl/rpl.h:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl.h:  /* my last registered DAO that I might be waiting for ACK on */
+core/net/rpl/rpl.h:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl.h:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-dag.c:  /* if MOP is set to no downward routes no DAO should be sent */
+core/net/rpl/rpl-dag.c:    /* Remove routes installed by DAOs. */
+core/net/rpl/rpl-dag.c:    /* Remove routes installed by DAOs. */
+core/net/rpl/rpl-dag.c:    /* Remove routes installed by DAOs. */
+core/net/rpl/rpl-dag.c:    /* Remove routes installed by DAOs. */
+core/net/rpl/rpl-dag.c:      /* Send a No-Path DAO to the removed preferred parent. */
+core/net/rpl/rpl-dag.c:      /* Send a No-Path DAO to the removed preferred parent. */
+core/net/rpl/rpl-dag.c:    /* The DAO parent set changed - schedule a DAO transmission. */
+core/net/rpl/rpl-dag.c:      /* Send No-Path DAO only when nullifying preferred parent */
+core/net/rpl/rpl-dag.c:    PRINTF("RPL: The DIO does not meet the prerequisites for sending a DAO\n");
+core/net/rpl/rpl-dag.c:  /* Request refresh of DAO registrations next DIO */
+core/net/rpl/rpl-dag.c:	   * In that scenario, we suppress DAOs for multicast targets */
+core/net/rpl/rpl-nbr-policy.c:  /* Check if this DAO sender is not yet neighbor and there is already too
+core/net/rpl/rpl-nbr-policy.c:  /* When we get the DIO/DAO/DIS we know that UIP contains the
+core/net/rpl/rpl-nbr-policy.c:  case NBR_TABLE_REASON_RPL_DAO:
+core/net/rpl/rpl-private.h:#define RPL_CODE_DAO                   0x02   /* Destination Advertisement Option */
+core/net/rpl/rpl-private.h:#define RPL_CODE_DAO_ACK               0x03   /* DAO acknowledgment */
+core/net/rpl/rpl-private.h:#define RPL_CODE_SEC_DAO               0x82   /* Secure DAO */
+core/net/rpl/rpl-private.h:#define RPL_CODE_SEC_DAO_ACK           0x83   /* Secure DAO ACK */
+core/net/rpl/rpl-private.h:#define RPL_DAO_K_FLAG                   0x80 /* DAO ACK requested */
+core/net/rpl/rpl-private.h:#define RPL_DAO_D_FLAG                   0x40 /* DODAG ID present */
+core/net/rpl/rpl-private.h:#define RPL_DAO_ACK_UNCONDITIONAL_ACCEPT 0
+core/net/rpl/rpl-private.h:#define RPL_DAO_ACK_ACCEPT               1   /* 1 - 127 is OK but not good */
+core/net/rpl/rpl-private.h:#define RPL_DAO_ACK_UNABLE_TO_ACCEPT     128 /* >127 is fail */
+core/net/rpl/rpl-private.h:#define RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT 255 /* root can not accept */
+core/net/rpl/rpl-private.h:#define RPL_DAO_ACK_TIMEOUT              -1
+core/net/rpl/rpl-private.h:/* DAO transmissions are always delayed by RPL_DAO_DELAY +/- RPL_DAO_DELAY/2 */
+core/net/rpl/rpl-private.h:#ifdef RPL_CONF_DAO_DELAY
+core/net/rpl/rpl-private.h:#define RPL_DAO_DELAY                 RPL_CONF_DAO_DELAY
+core/net/rpl/rpl-private.h:#else /* RPL_CONF_DAO_DELAY */
+core/net/rpl/rpl-private.h:#define RPL_DAO_DELAY                 (CLOCK_SECOND * 4)
+core/net/rpl/rpl-private.h:#endif /* RPL_CONF_DAO_DELAY */
+core/net/rpl/rpl-private.h:/* Delay between reception of a no-path DAO and actual route removal */
+core/net/rpl/rpl-private.h:#ifdef RPL_CONF_DAO_MAX_RETRANSMISSIONS
+core/net/rpl/rpl-private.h:#define RPL_DAO_MAX_RETRANSMISSIONS RPL_CONF_DAO_MAX_RETRANSMISSIONS
+core/net/rpl/rpl-private.h:#define RPL_DAO_MAX_RETRANSMISSIONS     5
+core/net/rpl/rpl-private.h:#endif /* RPL_CONF_DAO_MAX_RETRANSMISSIONS */
+core/net/rpl/rpl-private.h:#ifdef RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
+core/net/rpl/rpl-private.h:#define RPL_DAO_RETRANSMISSION_TIMEOUT RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
+core/net/rpl/rpl-private.h:#define RPL_DAO_RETRANSMISSION_TIMEOUT  (5 * CLOCK_SECOND)
+core/net/rpl/rpl-private.h:#endif /* RPL_CONF_DAO_RETRANSMISSION_TIMEOUT */
+core/net/rpl/rpl-private.h:#define RPL_ROUTE_FROM_UNICAST_DAO      1
+core/net/rpl/rpl-private.h:#define RPL_ROUTE_FROM_MULTICAST_DAO    2
+core/net/rpl/rpl-mrhof.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-mrhof.c:  if(status == RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT) {
+core/net/rpl/rpl-mrhof.c:  /* here we need to handle failed DAO's and other stuff */
+core/net/rpl/rpl-mrhof.c:  PRINTF("RPL: MRHOF - DAO ACK received with status: %d\n", status);
+core/net/rpl/rpl-mrhof.c:  if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+core/net/rpl/rpl-mrhof.c:  } else if(status == RPL_DAO_ACK_TIMEOUT) { /* timeout = no ack */
+core/net/rpl/rpl-mrhof.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-mrhof.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-timers.c:  /* Set up another DAO within half the expiration time, if such a
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: Scheduling DAO lifetime timer %u ticks in the future\n",
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: Postpone DAO transmission\n");
+core/net/rpl/rpl-timers.c:  /* Send the DAO to the DAO parent set -- the preferred parent in our case. */
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: handle_dao_timer - sending DAO\n");
+core/net/rpl/rpl-timers.c:    /* Send DAOs for multicast prefixes only if the instance is in MOP 3 */
+core/net/rpl/rpl-timers.c:      /* Send a DAO for own multicast addresses */
+core/net/rpl/rpl-timers.c:      /* Iterate over multicast routes and send DAOs */
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: No suitable DAO parent\n");
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: DAO timer already scheduled\n");
+core/net/rpl/rpl-timers.c:    PRINTF("RPL: Scheduling DAO timer %u ticks in the future\n",
+core/net/rpl/rpl-timers.c:  schedule_dao(instance, RPL_DAO_DELAY);
+core/net/rpl/rpl-icmp6.c:#ifdef RPL_DEBUG_DAO_OUTPUT
+core/net/rpl/rpl-icmp6.c:void RPL_DEBUG_DAO_OUTPUT(rpl_parent_t *);
+core/net/rpl/rpl-icmp6.c:UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
+core/net/rpl/rpl-icmp6.c:UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:    if(re->state.dao_seqno_out == seq && RPL_ROUTE_IS_DAO_PENDING(re)) {
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-icmp6.c:/* prepare for forwarding of DAO */
+core/net/rpl/rpl-icmp6.c:  /* set DAO pending and sequence numbers */
+core/net/rpl/rpl-icmp6.c:  RPL_ROUTE_SET_DAO_PENDING(rep);
+core/net/rpl/rpl-icmp6.c:  if(RPL_DIO_REFRESH_DAO_ROUTES && is_root && uc_addr == NULL) {
+core/net/rpl/rpl-icmp6.c:    /* Request new DAO to refresh route. We do not do this for unicast DIO
+core/net/rpl/rpl-icmp6.c:     * in order to avoid DAO messages after a DIS-DIO update,
+core/net/rpl/rpl-icmp6.c:  if(RPL_DIO_REFRESH_DAO_ROUTES && is_root && uc_addr == NULL) {
+core/net/rpl/rpl-icmp6.c:    /* Request new DAO to refresh route. We do not do this for unicast DIO
+core/net/rpl/rpl-icmp6.c:     * in order to avoid DAO messages after a DIS-DIO update,
+core/net/rpl/rpl-icmp6.c:  if(flags & RPL_DAO_D_FLAG) {
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Ignoring a DAO for a DAG different from ours\n");
+core/net/rpl/rpl-icmp6.c:                 RPL_ROUTE_FROM_MULTICAST_DAO : RPL_ROUTE_FROM_UNICAST_DAO;
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: Received a (%s) DAO with sequence number %u from ",
+core/net/rpl/rpl-icmp6.c:      learned_from == RPL_ROUTE_FROM_UNICAST_DAO? "unicast": "multicast", sequence);
+core/net/rpl/rpl-icmp6.c:  if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
+core/net/rpl/rpl-icmp6.c:    /* Check whether this is a DAO forwarding loop. */
+core/net/rpl/rpl-icmp6.c:    /* check if this is a new DAO registration with an "illegal" rank */
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
+core/net/rpl/rpl-icmp6.c:    /* If we get the DAO from our parent, we also have a loop. */
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Loop detected when receiving a unicast DAO from our parent\n");
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: DAO lifetime: %u, prefix length: %u prefix: ",
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: No-Path DAO received\n");
+core/net/rpl/rpl-icmp6.c:    /* No-Path DAO received; invoke the route purging routine. */
+core/net/rpl/rpl-icmp6.c:      /* We forward the incoming No-Path DAO to our parent, if we have
+core/net/rpl/rpl-icmp6.c:        PRINTF("RPL: Forwarding No-path DAO to parent - out_seq:%d",
+core/net/rpl/rpl-icmp6.c:                       ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+core/net/rpl/rpl-icmp6.c:    if(flags & RPL_DAO_K_FLAG) {
+core/net/rpl/rpl-icmp6.c:      /* indicate that we accepted the no-path DAO */
+core/net/rpl/rpl-icmp6.c:                     RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: Adding DAO route\n");
+core/net/rpl/rpl-icmp6.c:  if((nbr = rpl_icmp6_update_nbr_table(&dao_sender_addr, NBR_TABLE_REASON_RPL_DAO, instance)) == NULL) {
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: Out of Memory, dropping DAO from ");
+core/net/rpl/rpl-icmp6.c:    if(flags & RPL_DAO_K_FLAG) {
+core/net/rpl/rpl-icmp6.c:		     is_root ? RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT :
+core/net/rpl/rpl-icmp6.c:		     RPL_DAO_ACK_UNABLE_TO_ACCEPT);
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: Could not add a route after receiving a DAO\n");
+core/net/rpl/rpl-icmp6.c:    if(flags & RPL_DAO_K_FLAG) {
+core/net/rpl/rpl-icmp6.c:		     is_root ? RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT :
+core/net/rpl/rpl-icmp6.c:		     RPL_DAO_ACK_UNABLE_TO_ACCEPT);
+core/net/rpl/rpl-icmp6.c:  if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
+core/net/rpl/rpl-icmp6.c:    if(flags & RPL_DAO_K_FLAG) {
+core/net/rpl/rpl-icmp6.c:      if((!RPL_ROUTE_IS_DAO_PENDING(rep) &&
+core/net/rpl/rpl-icmp6.c:      if(RPL_ROUTE_IS_DAO_PENDING(rep) &&
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Forwarding DAO to parent ");
+core/net/rpl/rpl-icmp6.c:                     ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Sending DAO ACK\n");
+core/net/rpl/rpl-icmp6.c:                     RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+core/net/rpl/rpl-icmp6.c:  if(flags & RPL_DAO_D_FLAG) {
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: Ignoring a DAO for a DAG different from ours\n");
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: DAO lifetime: %u, prefix length: %u prefix: ",
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: No-Path DAO received\n");
+core/net/rpl/rpl-icmp6.c:  if(flags & RPL_DAO_K_FLAG) {
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: Sending DAO ACK\n");
+core/net/rpl/rpl-icmp6.c:        RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: Received a DAO from ");
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: Ignoring a DAO for an unknown RPL instance(%u)\n",
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:  if(instance->my_dao_transmissions >= RPL_DAO_MAX_RETRANSMISSIONS) {
+core/net/rpl/rpl-icmp6.c:       * and no DAO_ACK configured. This probably means that the root
+core/net/rpl/rpl-icmp6.c:       * does not support DAO ack. Assume that everything is ok for
+core/net/rpl/rpl-icmp6.c:      instance->of->dao_ack_callback(parent, RPL_DAO_ACK_TIMEOUT);
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: will retransmit DAO - seq:%d trans:%d\n", instance->my_dao_seqno,
+core/net/rpl/rpl-icmp6.c:             RPL_DAO_RETRANSMISSION_TIMEOUT / 2 +
+core/net/rpl/rpl-icmp6.c:             (random_rand() % (RPL_DAO_RETRANSMISSION_TIMEOUT / 2)),
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-icmp6.c:    PRINTF("RPL: No global address set for this node - suppressing DAO\n");
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:  /* set up the state since this will be the first transmission of DAO */
+core/net/rpl/rpl-icmp6.c:  /* keep track of my own sending of DAO for handling ack and loss of ack */
+core/net/rpl/rpl-icmp6.c:    ctimer_set(&instance->dao_retransmit_timer, RPL_DAO_RETRANSMISSION_TIMEOUT,
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-icmp6.c:  /* Sending a DAO with own prefix as target */
+core/net/rpl/rpl-icmp6.c:  /* If we are in feather mode, we should not send any DAOs */
+core/net/rpl/rpl-icmp6.c:#ifdef RPL_DEBUG_DAO_OUTPUT
+core/net/rpl/rpl-icmp6.c:  RPL_DEBUG_DAO_OUTPUT(parent);
+core/net/rpl/rpl-icmp6.c:#if RPL_DAO_SPECIFY_DAG
+core/net/rpl/rpl-icmp6.c:  buffer[pos] |= RPL_DAO_D_FLAG;
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_DAO_SPECIFY_DAG */
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:    buffer[pos] |= RPL_DAO_K_FLAG;
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-icmp6.c:#if RPL_DAO_SPECIFY_DAG
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_DAO_SPECIFY_DAG */
+core/net/rpl/rpl-icmp6.c:    /* Send DAO to parent */
+core/net/rpl/rpl-icmp6.c:    /* Send DAO to root */
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
+core/net/rpl/rpl-icmp6.c:    uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:  PRINTF("RPL: Received a DAO %s with sequence number %d (%d) and status %d from ",
+core/net/rpl/rpl-icmp6.c:    /* Inform objective function on status of the DAO ACK */
+core/net/rpl/rpl-icmp6.c:#if RPL_REPAIR_ON_DAO_NACK
+core/net/rpl/rpl-icmp6.c:    if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+core/net/rpl/rpl-icmp6.c:       * Failed the DAO transmission - need to remove the default route.
+core/net/rpl/rpl-icmp6.c:       * Trigger a local repair since we can not get our DAO in.
+core/net/rpl/rpl-icmp6.c:    /* this DAO ACK should be forwarded to another recently registered route */
+core/net/rpl/rpl-icmp6.c:      /* pick the recorded seq no from that node and forward DAO ACK - and
+core/net/rpl/rpl-icmp6.c:      RPL_ROUTE_CLEAR_DAO_PENDING(re);
+core/net/rpl/rpl-icmp6.c:        PRINTF("RPL: No next hop to fwd DAO ACK to\n");
+core/net/rpl/rpl-icmp6.c:        PRINTF("RPL: Fwd DAO ACK to:");
+core/net/rpl/rpl-icmp6.c:        uip_icmp6_send(nexthop, ICMP6_RPL, RPL_CODE_DAO_ACK, 4);
+core/net/rpl/rpl-icmp6.c:      if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+core/net/rpl/rpl-icmp6.c:      PRINTF("RPL: No route entry found to forward DAO ACK (seqno %u)\n", sequence);
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-icmp6.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-icmp6.c:  PRINTF("\nRPL: Sending a DAO %s with sequence number %d to ", status < 128 ? "ACK" : "NACK", sequence);
+core/net/rpl/rpl-icmp6.c:  uip_icmp6_send(dest, ICMP6_RPL, RPL_CODE_DAO_ACK, 4);
+core/net/rpl/rpl-icmp6.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-of0.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl-of0.c:  if(status == RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT) {
+core/net/rpl/rpl-of0.c:  /* here we need to handle failed DAO's and other stuff */
+core/net/rpl/rpl-of0.c:  PRINTF("RPL: OF0 - DAO ACK received with status: %d\n", status);
+core/net/rpl/rpl-of0.c:  if(status >= RPL_DAO_ACK_UNABLE_TO_ACCEPT) {
+core/net/rpl/rpl-of0.c:  } else if(status == RPL_DAO_ACK_TIMEOUT) { /* timeout = no ack */
+core/net/rpl/rpl-of0.c:#endif /* RPL_WITH_DAO_ACK */
+core/net/rpl/rpl-of0.c:#if RPL_WITH_DAO_ACK
+core/net/rpl/rpl.c:    /* If we switch to mesh mode, we should send out a DAO message to
+core/net/rpl/rpl.c:       we must set the mode variable, since DAOs will not be sent if
+core/net/rpl/rpl.c:      PRINTF("rpl_set_mode: RPL sending DAO with zero lifetime\n");
+core/net/rpl/rpl.c:      /* Propagate this information with a No-Path DAO to preferred parent if we are not a RPL Root */
+core/net/rpl/rpl.c:        PRINTF(" -> generate No-Path DAO\n");
+core/net/rpl/rpl.c:        /* Don't schedule more than 1 No-Path DAO, let next iteration handle that */
+core/net/rpl/rpl-ext-header.c:    /* Trigger DAO retransmission */
+core/net/rpl/rpl-ext-header.c:       * a parent switch would result in an immediate No-path DAO transmission, dropping
+core/net/rpl/rpl-ext-header.c:                but it is not feasible yet, so we send a No-Path DAO instead */
+core/net/rpl/rpl-ext-header.c:          PRINTF("RPL generate No-Path DAO\n");
+core/net/rpl/rpl-ext-header.c:              11.2 of RFC6550. If the packet progresses along a DAO route,
+core/net/rpl/rpl-ext-header.c:          /* A DAO route was found so we set the down flag. */
+core/net/rpl/rpl-conf.h:#ifndef RPL_CONF_DAO_SPECIFY_DAG
+core/net/rpl/rpl-conf.h:    #define RPL_DAO_SPECIFY_DAG 1
+core/net/rpl/rpl-conf.h:    #define RPL_DAO_SPECIFY_DAG 0
+core/net/rpl/rpl-conf.h:  #define RPL_DAO_SPECIFY_DAG RPL_CONF_DAO_SPECIFY_DAG
+core/net/rpl/rpl-conf.h:#endif /* RPL_CONF_DAO_SPECIFY_DAG */
+core/net/rpl/rpl-conf.h: * RPL DAO ACK support. When enabled, DAO ACK will be sent and requested.
+core/net/rpl/rpl-conf.h: * This will also enable retransmission of DAO when no ack is received.
+core/net/rpl/rpl-conf.h:#ifdef RPL_CONF_WITH_DAO_ACK
+core/net/rpl/rpl-conf.h:#define RPL_WITH_DAO_ACK RPL_CONF_WITH_DAO_ACK
+core/net/rpl/rpl-conf.h:#define RPL_WITH_DAO_ACK 0
+core/net/rpl/rpl-conf.h:#endif /* RPL_CONF_WITH_DAO_ACK */
+core/net/rpl/rpl-conf.h: * RPL REPAIR ON DAO NACK. When enabled, DAO NACK will trigger a local
+core/net/rpl/rpl-conf.h: * repair in order to quickly find a new parent to send DAO's to.
+core/net/rpl/rpl-conf.h:#ifdef RPL_CONF_RPL_REPAIR_ON_DAO_NACK
+core/net/rpl/rpl-conf.h:#define RPL_REPAIR_ON_DAO_NACK RPL_CONF_RPL_REPAIR_ON_DAO_NACK
+core/net/rpl/rpl-conf.h:#define RPL_REPAIR_ON_DAO_NACK 0
+core/net/rpl/rpl-conf.h:#endif /* RPL_CONF_RPL_REPAIR_ON_DAO_NACK */
+core/net/rpl/rpl-conf.h: * Setting the DIO_REFRESH_DAO_ROUTES will make the RPL root always
+core/net/rpl/rpl-conf.h: * their DAO route. This is needed when DAO-ACK is not enabled to add
+core/net/rpl/rpl-conf.h:#ifdef RPL_CONF_DIO_REFRESH_DAO_ROUTES
+core/net/rpl/rpl-conf.h:#define RPL_DIO_REFRESH_DAO_ROUTES RPL_CONF_DIO_REFRESH_DAO_ROUTES
+core/net/rpl/rpl-conf.h:#define RPL_DIO_REFRESH_DAO_ROUTES 1
+core/net/rpl/rpl-conf.h:#endif /* RPL_CONF_DIO_REFRESH_DAO_ROUTES */

@@ -271,6 +271,7 @@ public class DirectedGraphMedium extends AbstractRadioMedium {
       int srcc = source.getChannel();
       int dstc = dest.radio.getChannel();
       int edgeChannel = dest.getChannel();
+       
 
       if (edgeChannel >= 0 && dstc >= 0 && edgeChannel != dstc) {
       	/* Fail: the edge is configured for a different radio channel */
@@ -320,13 +321,18 @@ public class DirectedGraphMedium extends AbstractRadioMedium {
             
       if (dest.ratio < 1.0 && random.nextDouble() > dest.ratio) {
     	/* Fail: Reception ratio */
-        /*logger.info(source + ": Fail, randomly");*/
+	/*Lavanya*/
+      int ID = source.getMote().getID();
+      logger.info("Lavanya:Fail,randomlysource_ID:" + ID + "dest_ID" + dest.radio.getMote().getID() );
+   
+    /*Lavanya*/
+       /* logger.info(source + " Lavanya:Fail,randomly");*/
         newConn.addInterfered(dest.radio);
         continue;
       }
 
       /* Success: radio starts receiving */
-      /*logger.info(source + ": OK: " + dest.radio);*/
+      logger.info(source + ": OK: " + dest.radio);
       newConn.addDestination(dest.radio, dest.delay);
     }
 

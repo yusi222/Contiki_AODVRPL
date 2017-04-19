@@ -94,6 +94,8 @@ extern struct etimer uip_reass_timer;
 /**
  * \internal Structure for holding a TCP port and a process ID.
  */
+
+
 struct listenport {
   uint16_t port;
   struct process *p;
@@ -124,6 +126,7 @@ uint8_t
 tcpip_output(const uip_lladdr_t *a)
 {
   int ret;
+/* PRINTF("tcpip_output(const uip_lladdr_t *a) \n ");*/
   if(outputfunc != NULL) {
     ret = outputfunc(a);
     return ret;
@@ -536,10 +539,6 @@ tcpip_ipv6_output(void)
   uip_ds6_nbr_t *nbr = NULL;
   uip_ipaddr_t *nexthop = NULL;
 
- /* printf("tcpip_ipv6_output....");
-  PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  printf("\n");*/
-
   if(uip_len == 0) {
     return;
   }
@@ -582,9 +581,13 @@ tcpip_ipv6_output(void)
        link. If so, we simply use the destination address as our
        nexthop address. */
     if(nexthop == NULL && uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
- //    PRINTF("\n CALLING uip_ds6_is_addr_onlink ");
+
+      PRINTF("CALLING uip_ds6_is_addr_onlink ");
       nexthop = &UIP_IP_BUF->destipaddr;
-      PRINTF("Dest is nexthop "); PRINT6ADDR(nexthop);PRINTF("\n");
+      PRINTF("Dest is nexthop ");
+      PRINT6ADDR(nexthop);
+      PRINTF("\n"); 	
+      
     }
 
     if(nexthop == NULL) {
@@ -592,12 +595,9 @@ tcpip_ipv6_output(void)
       rpl_dag_t *dag =NULL ;
       uip_ipaddr_t ipaddr ;
       /* Check if we have a route to the destination address. */
-        PRINTF(" tcpip_ipv6_output :route for destination ");
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-        PRINTF("\n");
       route = uip_ds6_aodv_route_lookup(&UIP_IP_BUF->destipaddr);
       if(route == NULL) { 
-        PRINTF(" tcpip_ipv6_output :No route found");
+        PRINTF(" tcpip_ipv6_output :No route found\n");
         PRINT6ADDR(&UIP_IP_BUF->destipaddr);
         PRINTF("\n");
         locaddr =  uip_ds6_get_global(ADDR_PREFERRED);
@@ -613,8 +613,8 @@ tcpip_ipv6_output(void)
          }
         }
         /* No route was found - we send to the default route instead. */
-        nexthop = uip_ds6_defrt_choose();
         PRINTF("tcpip_ipv6_output: no route found, using default route");
+        nexthop = uip_ds6_defrt_choose();
         PRINT6ADDR(nexthop);
         PRINTF("\n");
         if(nexthop == NULL) {
@@ -648,9 +648,8 @@ tcpip_ipv6_output(void)
       } else {
         /* A route was found, so we look up the nexthop neighbor for
            the route. */
-        PRINTF("Route found,look up the nexthop ");
+        PRINTF("tcpip_ipv6_output: route was found nexthop neighbor for the route");
         nexthop = uip_ds6_route_nexthop(route);
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
         PRINT6ADDR(nexthop);
 	PRINTF("\n");
         /* If the nexthop is dead, for example because the neighbor
@@ -747,8 +746,8 @@ tcpip_ipv6_output(void)
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
         }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
-          PRINTF("uip_clear_buf\n");
-          uip_clear_buf();
+        /*  PRINTF("1uip_clear_buf\n");*/
+        uip_clear_buf();
         return;
       }
       /* Send in parallel if we are running NUD (nbc state is either STALE,
@@ -757,7 +756,7 @@ tcpip_ipv6_output(void)
         nbr->state = NBR_DELAY;
         stimer_set(&nbr->reachable, UIP_ND6_DELAY_FIRST_PROBE_TIME);
         nbr->nscount = 0;
-        PRINTF("tcpip_ipv6_output: nbr cache entry stale moving to delay\n");
+        PRINTF("\ntcpip_ipv6_output: nbr cache entry stale moving to delay\n");
       }
 #endif /* UIP_ND6_SEND_NA */
 

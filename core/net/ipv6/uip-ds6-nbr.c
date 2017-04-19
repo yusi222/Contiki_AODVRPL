@@ -304,6 +304,7 @@ uip_ds6_neighbor_periodic(void)
         PRINTF("PROBE END\n");
         if((locdefrt = uip_ds6_defrt_lookup(&nbr->ipaddr)) != NULL) {
           if (!locdefrt->isinfinite) {
+            printf ("NBR_PROBE uip_ds6_defrt_rm\n");
             uip_ds6_defrt_rm(locdefrt);
           }
         }

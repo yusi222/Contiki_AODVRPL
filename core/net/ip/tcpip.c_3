@@ -536,10 +536,6 @@ tcpip_ipv6_output(void)
   uip_ds6_nbr_t *nbr = NULL;
   uip_ipaddr_t *nexthop = NULL;
 
- /* printf("tcpip_ipv6_output....");
-  PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  printf("\n");*/
-
   if(uip_len == 0) {
     return;
   }
@@ -582,9 +578,10 @@ tcpip_ipv6_output(void)
        link. If so, we simply use the destination address as our
        nexthop address. */
     if(nexthop == NULL && uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
+
  //    PRINTF("\n CALLING uip_ds6_is_addr_onlink ");
       nexthop = &UIP_IP_BUF->destipaddr;
-      PRINTF("Dest is nexthop "); PRINT6ADDR(nexthop);PRINTF("\n");
+      PRINTF("Dest is nexthop "); PRINT6ADDR(nexthop);	PRINTF("\n");
     }
 
     if(nexthop == NULL) {
@@ -592,7 +589,7 @@ tcpip_ipv6_output(void)
       rpl_dag_t *dag =NULL ;
       uip_ipaddr_t ipaddr ;
       /* Check if we have a route to the destination address. */
-        PRINTF(" tcpip_ipv6_output :route for destination ");
+      PRINTF(" tcpip_ipv6_output :route for destination ");
         PRINT6ADDR(&UIP_IP_BUF->destipaddr);
         PRINTF("\n");
       route = uip_ds6_aodv_route_lookup(&UIP_IP_BUF->destipaddr);
@@ -648,9 +645,8 @@ tcpip_ipv6_output(void)
       } else {
         /* A route was found, so we look up the nexthop neighbor for
            the route. */
-        PRINTF("Route found,look up the nexthop ");
+        PRINT6ADDR("\nRoute found,look up the nexthop ");
         nexthop = uip_ds6_route_nexthop(route);
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
         PRINT6ADDR(nexthop);
 	PRINTF("\n");
         /* If the nexthop is dead, for example because the neighbor
@@ -747,8 +743,8 @@ tcpip_ipv6_output(void)
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
         }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
-          PRINTF("uip_clear_buf\n");
-          uip_clear_buf();
+        /*  PRINTF("1uip_clear_buf\n");*/
+        uip_clear_buf();
         return;
       }
       /* Send in parallel if we are running NUD (nbc state is either STALE,

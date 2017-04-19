@@ -1094,6 +1094,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
    ((((uint16_t *)addr1)[1] & ((uint16_t *)mask)[1]) ==       \
     (((uint16_t *)addr2)[1] & ((uint16_t *)mask)[1])))
 
+//#define uip_ipaddr_prefixcmp(addr1, addr2, length) (memcmp(addr1, addr2, length) == 0)
 #define uip_ipaddr_prefixcmp(addr1, addr2, length) (memcmp(addr1, addr2, length>>3) == 0)
 
 

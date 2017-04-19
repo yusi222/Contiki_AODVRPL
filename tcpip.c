@@ -435,7 +435,7 @@ eventhandler(process_event_t ev, process_data_t data)
           tcpip_ipv6_output();
 #else
           if(uip_len > 0) {
-            PRINTF("\ntcpip_output from periodic len %d\n", uip_len);
+            PRINTF("tcpip_output from periodic len %d\n", uip_len);
             tcpip_output();
             PRINTF("tcpip_output after periodic len %d\n", uip_len);
           }
@@ -536,10 +536,6 @@ tcpip_ipv6_output(void)
   uip_ds6_nbr_t *nbr = NULL;
   uip_ipaddr_t *nexthop = NULL;
 
- /* printf("tcpip_ipv6_output....");
-  PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  printf("\n");*/
-
   if(uip_len == 0) {
     return;
   }
@@ -582,80 +578,38 @@ tcpip_ipv6_output(void)
        link. If so, we simply use the destination address as our
        nexthop address. */
     if(nexthop == NULL && uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
- //    PRINTF("\n CALLING uip_ds6_is_addr_onlink ");
       nexthop = &UIP_IP_BUF->destipaddr;
-      PRINTF("Dest is nexthop "); PRINT6ADDR(nexthop);PRINTF("\n");
+      PRINTF("\n NEXT HOPE");
+      PRINT6ADDR(&UIP_IP_BUF->destipaddr );	 
     }
 
     if(nexthop == NULL) {
       uip_ds6_route_t *route;
-      rpl_dag_t *dag =NULL ;
-      uip_ipaddr_t ipaddr ;
+
       /* Check if we have a route to the destination address. */
-        PRINTF(" tcpip_ipv6_output :route for destination ");
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-        PRINTF("\n");
       route = uip_ds6_aodv_route_lookup(&UIP_IP_BUF->destipaddr);
-      if(route == NULL) { 
-        PRINTF(" tcpip_ipv6_output :No route found");
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-        PRINTF("\n");
-        locaddr =  uip_ds6_get_global(ADDR_PREFERRED);
-        memcpy(&prefix, &(locaddr->ipaddr), 16);
-        if ( uip_ipaddr_cmp( &UIP_IP_BUF->srcipaddr, &locaddr->ipaddr))
-        { 
-            
-	   PRINTF("tcpip_ipv6_output: no route found,calling AODV_RPL\n ");
-          dag =  rpl_set_root_ptop(RPL_AODV_RREQ_DEFAULT_INSTANCE,&(locaddr->ipaddr),RPL_MOP_AODV_RPL, RPL_OPTION_RREQ, &UIP_IP_BUF->destipaddr,AODV_SYMMTRIC_LINK);
-	 if(dag != NULL) {
-	   rpl_set_prefix(dag, &prefix, 64);
-	   PRINTF("AODV_RPL:created a new RPL dag \n");
-         }
-        }
-        /* No route was found - we send to the default route instead. */
-        nexthop = uip_ds6_defrt_choose();
-        PRINTF("tcpip_ipv6_output: no route found, using default route");
-        PRINT6ADDR(nexthop);
-        PRINTF("\n");
-        if(nexthop == NULL) {
-#ifdef UIP_FALLBACK_INTERFACE
-          PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n",
-              uip_ext_len, *((uint8_t *)UIP_IP_BUF + 40));
-          if(uip_ext_len > 0) {
-            extern void remove_ext_hdr(void);
-            uint8_t proto = *((uint8_t *)UIP_IP_BUF + 40);
-            remove_ext_hdr();
-            /* This should be copied from the ext header... */
-            UIP_IP_BUF->proto = proto;
-          }
-          /* Inform the other end that the destination is not reachable. If it's
-           * not informed routes might get lost unexpectedly until there's a need
-           * to send a new packet to the peer */
-          if(UIP_FALLBACK_INTERFACE.output() < 0) {
-            PRINTF("FALLBACK: output error. Reporting DST UNREACH\n");
-            uip_icmp6_error_output(ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR, 0);
-            uip_flags = 0;
-            tcpip_ipv6_output();
-            return;
-          }
-#else
-          PRINTF("tcpip_ipv6_output: Destination off-link but no route\n");
-#endif /* !UIP_FALLBACK_INTERFACE */
-          uip_clear_buf();
-          return;
-        }
-/*       PRINTF(" use of default route END\n");*/
+      if(route == NULL) {
+             PRINTF("\n tcpip_ipv6_output: no route found,calling AODV_RPL ");     PRINT6ADDR(&UIP_IP_BUF->destipaddr);
+             locaddr =  uip_ds6_get_global(ADDR_PREFERRED);
+             rpl_dag_t *dag;
+  	     uip_ipaddr_t ipaddr;
+             memcpy(&prefix, &(locaddr->ipaddr), 16);
+             dag =  rpl_set_root_ptop(RPL_AODV_RREQ_DEFAULT_INSTANCE,&(locaddr->ipaddr),RPL_MOP_AODV_RPL, RPL_OPTION_RREQ, &UIP_IP_BUF->destipaddr,AODV_SYMMTRIC_LINK);
+	     if(dag != NULL) {
+	          rpl_set_prefix(dag, &prefix, 64);
+		  PRINTF("AODV_RPL:created a new RPL dag Link is %d\n",AODV_SYMMTRIC_LINK);
+            }
       } else {
         /* A route was found, so we look up the nexthop neighbor for
            the route. */
-        PRINTF("Route found,look up the nexthop ");
         nexthop = uip_ds6_route_nexthop(route);
-        PRINT6ADDR(&UIP_IP_BUF->destipaddr);
+        PRINTF("\n tcpip_ipv6_output: route found, next hop");    
         PRINT6ADDR(nexthop);
-	PRINTF("\n");
+	    PRINTF("\n");
         /* If the nexthop is dead, for example because the neighbor
            never responded to link-layer acks, we drop its route. */
         if(nexthop == NULL) {
+     //    PRINTF(" tcpip_ipv6_output:  next hop ");
 #if UIP_CONF_IPV6_RPL
           /* If we are running RPL, and if we are the root of the
              network, we'll trigger a global repair berfore we remove
@@ -693,10 +647,9 @@ tcpip_ipv6_output(void)
     }
 
     /* End of next hop determination */
-  /*  PRINTF("End of next hop determination\n  ");*/
+
     nbr = uip_ds6_nbr_lookup(nexthop);
     if(nbr == NULL) {
-   /* PRINTF("nbration\n  ");*/
 #if UIP_ND6_SEND_NA
       if((nbr = uip_ds6_nbr_add(nexthop, NULL, 0, NBR_INCOMPLETE, NBR_TABLE_REASON_IPV6_ND, NULL)) == NULL) {
         uip_clear_buf();
@@ -705,8 +658,6 @@ tcpip_ipv6_output(void)
       } else {
 #if UIP_CONF_IPV6_QUEUE_PKT
         /* Copy outgoing pkt in the queuing buffer for later transmit. */
-  
-        PRINTF("Copy outgoing pkt in the queuing buffer for later transmit\n");
         if(uip_packetqueue_alloc(&nbr->packethandle, UIP_DS6_NBR_PACKET_LIFETIME) != NULL) {
           memcpy(uip_packetqueue_buf(&nbr->packethandle), UIP_IP_BUF, uip_len);
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
@@ -735,20 +686,17 @@ tcpip_ipv6_output(void)
 #endif /* UIP_ND6_SEND_NA */
     } else {
 #if UIP_ND6_SEND_NA
-      
       if(nbr->state == NBR_INCOMPLETE) {
         PRINTF("tcpip_ipv6_output: nbr cache entry incomplete\n");
 #if UIP_CONF_IPV6_QUEUE_PKT
         /* Copy outgoing pkt in the queuing buffer for later transmit and set
            the destination nbr to nbr. */
         if(uip_packetqueue_alloc(&nbr->packethandle, UIP_DS6_NBR_PACKET_LIFETIME) != NULL) {
-          PRINTF("uip_packetqueue_alloc\n");
           memcpy(uip_packetqueue_buf(&nbr->packethandle), UIP_IP_BUF, uip_len);
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
         }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
-          PRINTF("uip_clear_buf\n");
-          uip_clear_buf();
+        uip_clear_buf();
         return;
       }
       /* Send in parallel if we are running NUD (nbc state is either STALE,
@@ -771,7 +719,6 @@ tcpip_ipv6_output(void)
        * to STALE, and you must both send a NA and the queued packet.
        */
       if(uip_packetqueue_buflen(&nbr->packethandle) != 0) {
-       PRINTF(" uip_packetqueue_buflen\n"); 
         uip_len = uip_packetqueue_buflen(&nbr->packethandle);
         memcpy(UIP_IP_BUF, uip_packetqueue_buf(&nbr->packethandle), uip_len);
         uip_packetqueue_free(&nbr->packethandle);
@@ -779,7 +726,6 @@ tcpip_ipv6_output(void)
       }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
 
-     /*  PRINTF(" uip_clear_buf\n"); */
       uip_clear_buf();
       return;
     }

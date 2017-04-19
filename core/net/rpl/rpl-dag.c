@@ -705,7 +705,10 @@ rpl_alloc_instance(uint8_t instance_id)
       instance->def_route = NULL;
       instance->used = 1;
 #if RPL_WITH_PROBING
-      rpl_schedule_probing(instance);
+      if( instance_id == RPL_DEFAULT_INSTANCE) {
+
+	      rpl_schedule_probing(instance);
+      }
 #endif /* RPL_WITH_PROBING */
       return instance;
     }
@@ -893,8 +896,8 @@ rpl_select_dag(rpl_instance_t *instance, rpl_parent_t *p)
 
   old_rank = instance->current_dag->rank;
   last_parent = instance->current_dag->preferred_parent;
-
   best_dag = instance->current_dag;
+
   if(best_dag->rank != ROOT_RANK(instance)) {
     if(rpl_select_parent(p->dag) != NULL) {
       if(p->dag != best_dag) {
@@ -1249,6 +1252,7 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
 	     return;
      }
  
+
   p->dtsn = dio->dtsn;
   PRINTF("succeeded\n");
 
@@ -1292,9 +1296,6 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
   instance->lifetime_unit = dio->lifetime_unit;
 
   memcpy(&dag->dag_id, &dio->dag_id, sizeof(dio->dag_id));
-//  PRINTF("RPL: DIO-ID "); PRINT6ADDR(&dio->dag_id );
-     
-
   /* Copy prefix information from the DIO into the DAG object. */
   memcpy(&dag->prefix_info, &dio->prefix_info, sizeof(rpl_prefix_t));
   
@@ -1311,13 +1312,13 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
     default_instance = instance;
   }
 
-  PRINTF("RPL: rpl_join_instance Joined DAG with instance ID %u, rank %hu,   DAG ID  ", dio->instance_id, dag->rank );
+  PRINTF("RPL: rpl_join_instance Joined DAG with instance ID %u, rank %u,   DAG ID  ", dio->instance_id, dag->rank );
   PRINT6ADDR(&dag->dag_id);
   PRINTF("\n");
  if (instance->mop == RPL_MOP_AODV_RPL) {
     if (dio->rpl_options.rreq_message.type == RPL_OPTION_RREQ){
 
-         PRINTF("AODV :join_instance RREQ from  %u   %hu from ",dio->instance_id,dag->rank);   
+         PRINTF("AODV :join_instance RREQ from  %u   rank %u from ",dio->instance_id,dag->rank);   
          PRINT6ADDR(from);
 //    	 if((rep =  uip_ds6_route_add( &dio->dag_id, sizeof(&dio->dag_id),AODV_RREQ_ENTRY, AODV_SYMMTRIC, from)) == NULL) 
     	 if((rep =  uip_ds6_route_add( &dio->dag_id, sizeof(&dio->dag_id),AODV_RREQ_ENTRY, dio->s, from)) == NULL)
@@ -1389,9 +1390,10 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
   if (instance->mop != RPL_MOP_AODV_RPL) {
      rpl_set_default_route(instance, from);
   }
-  if(instance->mop != RPL_MOP_NO_DOWNWARD_ROUTES) {
+  if((instance->mop != RPL_MOP_NO_DOWNWARD_ROUTES) && (instance->mop != RPL_MOP_AODV_RPL)) {
     rpl_schedule_dao(instance);
   } else {
+ 
     PRINTF("RPL: The DIO does not meet the prerequisites for sending a DAO\n");
   }
 
@@ -1862,7 +1864,7 @@ rpl_process_dio_ptop(uip_ipaddr_t *from, rpl_dio_t *dio)
   rpl_instance_t *instance;
   rpl_dag_t *dag, *previous_dag;
   rpl_parent_t *p;
-  static uip_ds6_addr_t *locaddr;
+ static uip_ds6_addr_t *locaddr;
   uip_ds6_route_t *rep;
   locaddr =  uip_ds6_get_global(ADDR_PREFERRED);
   dag = get_dag(dio->instance_id, &dio->dag_id,dio->mop);

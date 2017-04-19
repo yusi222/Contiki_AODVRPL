@@ -146,7 +146,7 @@
 /*--------------------------------------------------*/
 /* Should we use LinkLayer acks in NUD ?*/
 #ifndef UIP_CONF_DS6_LL_NUD
-#define UIP_DS6_LL_NUD 0
+#define UIP_DS6_LL_NUD 1
 #else
 #define UIP_DS6_LL_NUD UIP_CONF_DS6_LL_NUD
 #endif
