@@ -655,7 +655,7 @@ rpl_update_header(void)
       /* Insert HBH option at source. Checking the address is not sufficient because
        * in non-storing mode, a packet may go up and then down the same path again */
       return insert_hbh_header(default_instance);
-    } else {
+     } else {
       /* Update HBH option at forwarders */
       return update_hbh_header();
     }

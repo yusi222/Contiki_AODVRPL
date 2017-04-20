@@ -90,8 +90,7 @@ rpl_instance_t instance_table[RPL_MAX_INSTANCES];
 rpl_instance_t *default_instance;
 
 /*---------------------------------------------------------------------------*/
-void
-rpl_print_neighbor_list(void)
+void rpl_print_neighbor_list(void)
 {
   if(default_instance != NULL && default_instance->current_dag != NULL &&
       default_instance->of != NULL) {
@@ -1860,7 +1859,7 @@ if  (dio->mop == RPL_MOP_DEFAULT ) {
 void
 rpl_process_dio_ptop(uip_ipaddr_t *from, rpl_dio_t *dio)
 {
-//  PRINTF("AODV:  rpl_process_dio_AODV  mop %d\n",dio->mop); // PRINT6ADDR(from); 
+  PRINTF("AODV:  rpl_process_dio_AODV  mop %d\n",dio->mop); // PRINT6ADDR(from); 
   rpl_instance_t *instance;
   rpl_dag_t *dag, *previous_dag;
   rpl_parent_t *p;

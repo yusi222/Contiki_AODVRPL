@@ -59,7 +59,7 @@
 #include <limits.h>
 #include <string.h>
 #include "net/link-stats.h"
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 
 #include "net/ip/uip-debug.h"
 
@@ -331,6 +331,7 @@ dio_input(void)
   int i;
   int len;
   uip_ipaddr_t from;
+  
 static uip_ds6_addr_t *locaddr;
   memset(&dio, 0, sizeof(dio));
 
@@ -372,11 +373,21 @@ static uip_ds6_addr_t *locaddr;
   dio.dtsn = buffer[i++];
   dio.s = buffer[i] & RPL_DIO_S;
 
+/*
  PRINTF(" RPL: Incoming DIO from (id, ver, rank, sym) = (%u,%u,%u,%s) ",
          (unsigned)dio.instance_id,
          (unsigned)dio.version,
          (unsigned)dio.rank, dio.s == 128 ? "SYMMETRIC" : "ASYMMETRIC");
   PRINT6ADDR(&from);
+*/
+  PRINTF("Recived Dio %d from ", dio.instance_id);
+  PRINT6ADDR(&from);
+  PRINTF("\n");
+
+//printf("Recived Dio from instance_id = %u   %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x ",(unsigned)dio.instance_id,  ((uint8_t *)&from)[0],((uint8_t *)&from)[1], ((uint8_t *)&from)[2],& ((uint8_t *)&from)[3], ((uint8_t *)&from)[4], ((uint8_t *)&from)[5], ((uint8_t *)&from)[6], ((uint8_t *)&from)[7], ((uint8_t *)&from)[8], ((uint8_t *)&from)[9], ((uint8_t *)&from)[10], ((uint8_t *)&from)[11], ((uint8_t *)&from)[12], ((uint8_t *)&from)[13], ((uint8_t *)&from)[14], ((uint8_t *)&from)[15]);
+
+
+
   //TODO Code
  /* two reserved bytes */
   i += 2;
