@@ -111,7 +111,7 @@ set_connection_address(uip_ipaddr_t *ipaddr)
 {
 
 //#define UDP_CONNECTION_ADDR       aaaa::200:0:0:a
-#define UDP_CONNECTION_ADDR       fd00:0:0:0:c30c:0:0:b
+#define UDP_CONNECTION_ADDR       fd00:0:0:0:c30c:0:0:d
 
 #ifndef UDP_CONNECTION_ADDR
 #if RESOLV_CONF_SUPPORTS_MDNS
