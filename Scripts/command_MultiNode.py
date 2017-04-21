@@ -30,14 +30,16 @@ delay_list =[]
 last_rec =0
 
 senter_1 = "ID:10"
-reciever_1 = "ID:2"
+reciever_1 = "ID:7"
 
 senter_list_1 = []
 reciever_list_1 = []
 delay_list_1 =[]
 final_delay_list =[] 
 
-print"---Extracting Data from File ...%s"%filename
+print"-----------------------------------------"
+print"Extracting Data from File :%s "%filename
+print"-----------------------------------------"
 fp = open(filename)
 f = fp.readlines() 
 for line in f:
@@ -61,6 +63,17 @@ for line in f:
         	No_data_pkt_received +=1
         reciever_list_1.append(subList)
 
+    if (re.findall("RPL: Sending a DIS.*",line)  ):     
+        No_DIS_pkt +=1
+     
+    if (re.findall("Incoming DIO from.*",line)  ):     
+        No_DIO_pkt +=1
+
+    if (re.findall("Recived Dio.*",line)  ):     
+        No_DIO_pkt +=1
+
+    if((re.findall("Sending a DAO.*",line))): # or (re.findall("Sending a No-Path DAO.*",line))):     
+	No_DAO_pkt +=1 
 fp.close()
 #print reciever_list_1
 
@@ -78,49 +91,25 @@ for send_pkt in senter_list_1:
             final_delay_list.insert(0,delay)
 
 
+last_sent = sentList[3]
+PDR = float (len(pkt_received_list)) / float(len(pkt_sent_list))
+Avg_delay = sum(final_delay_list) /float(len(final_delay_list))
+Control_packet = No_DIS_pkt + No_DIO_pkt + No_DIO_pkt + No_DAO_pkt
 
-#print "DelayList"
-#print delay_list_1
-
-#print "finaldelay"
-#print final_delay_list
-
+print"-----------------------------------------"
+print "simulation Summary:--- "
+print"-----------------------------------------"
 print "No_data_pkt_sent: %d "%len(pkt_sent_list)
 print "No_data_pkt_received :%d "%len(pkt_received_list)
 print "No of Pkt Droped %d "% ( No_data_pkt_sent- No_data_pkt_received)
-
-last_sent = sentList[3]
-PDR = float (len(pkt_received_list)) / float(len(pkt_sent_list))
+print "No of Control Packets %d "%Control_packet
 print "PDR :%f"%PDR 
-
-Avg_delay = sum(final_delay_list) /float(len(final_delay_list))
 print "AVg_Delay : %d milliseconds"%Avg_delay
 
-
-fs = open(filename)
-f = fs.readlines() 
 print"-----------------------------------------"
 print"       Writing Data into %s" %dest_filename
 print"-----------------------------------------"
 
-for line in f: 
-    if (re.findall("RPL: Sending a DIS.*",line)  ):     
-        No_DIS_pkt +=1
-     
-    if (re.findall("Incoming DIO from.*",line)  ):     
-        No_DIO_pkt +=1
-
-    if (re.findall("-DIO with.*",line)  ):     
-        No_DIO_pkt +=1
-
-    if((re.findall("Sending a DAO.*",line))): # or (re.findall("Sending a No-Path DAO.*",line))):     
-        No_DAO_pkt +=1
-       # print "*******"
-       # print sentList 
-                  
-fs.close() 
-
-Control_packet = No_DIS_pkt + No_DIO_pkt + No_DIO_pkt + No_DAO_pkt
 
 thefile = open(dest_filename, 'w')
 thefile.write("\n") 
